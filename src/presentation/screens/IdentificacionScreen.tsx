@@ -2,8 +2,8 @@
  * Pantalla de Identificación
  */
 
-import React, { useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import React from 'react';
+import { View, ScrollView, StyleSheet, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import { useIdentificacion } from '../hooks/useViewModels';
@@ -36,6 +36,11 @@ const estilos = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
   },
+  iconos: {
+    fontSize: 64,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
 });
 
 export const IdentificacionScreen = observer(({ navigation }: Props) => {
@@ -44,7 +49,7 @@ export const IdentificacionScreen = observer(({ navigation }: Props) => {
   const handleContinuar = async () => {
     if (actions.validarYContinuar()) {
       actions.setLoading(true);
-      // Simular pequeño delay
+
       setTimeout(() => {
         navigation.navigate('MenuPrincipal', { nombreJugador: state.nombreJugador });
         actions.setLoading(false);
@@ -53,23 +58,28 @@ export const IdentificacionScreen = observer(({ navigation }: Props) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={estilos.container}>
+    <ScrollView
+      contentContainerStyle={estilos.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <View>
+
+        {/* ICONOS */}
         <View style={{ marginBottom: 40 }}>
-          <View style={{ fontSize: 64, textAlign: 'center', marginBottom: 20 }}>
+          <Text style={{ fontSize: 64, textAlign: 'center', marginBottom: 20 }}>
             ♔ ♕ ♖ ♗ ♘ ♙
-          </View>
+          </Text>
         </View>
 
+        {/* TITULO Y SUBTITULO */}
         <View style={{ marginBottom: 32 }}>
-          <View style={{ fontSize: 28, marginBottom: 16 }}>
-            <View style={estilos.titulo}>⚔️ ClienteAjedrez</View>
-          </View>
-          <View style={estilos.subtitulo}>
+          <Text style={estilos.titulo}>⚔️ ClienteAjedrez</Text>
+          <Text style={estilos.subtitulo}>
             Ingresa tu nombre para comenzar a jugar
-          </View>
+          </Text>
         </View>
 
+        {/* INPUT */}
         <InputNombre
           value={state.nombreJugador}
           onChangeText={actions.setNombre}
@@ -78,13 +88,16 @@ export const IdentificacionScreen = observer(({ navigation }: Props) => {
           isLoading={state.isLoading}
         />
 
+        {/* BOTÓN */}
         <Boton
           title="Continuar"
           onPress={handleContinuar}
           loading={state.isLoading}
           disabled={!state.nombreJugador.trim()}
         />
+
       </View>
     </ScrollView>
+
   );
 });

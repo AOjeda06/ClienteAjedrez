@@ -2,4 +2,4 @@
  * Pantalla de Identificación
  */
 
-export { IdentificacionScreen as default } from '../../src/presentation/screens/IdentificacionScreen';
+export { IdentificacionScreen as default } from '../../ClienteAjedrez/src/presentation/screens/IdentificacionScreen';

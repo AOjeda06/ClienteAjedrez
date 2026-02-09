@@ -2,4 +2,4 @@
  * Pantalla de Partida
  */
 
-export { PartidaScreen as default } from '../../src/presentation/screens/PartidaScreen';
+export { PartidaScreen as default } from '../../ClienteAjedrez/src/presentation/screens/PartidaScreen';

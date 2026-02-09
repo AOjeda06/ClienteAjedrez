@@ -4,7 +4,7 @@
  * Implementa la lógica completa de validación de movimientos de ajedrez
  */
 
-import { ID, Color, Posicion, TABLERO_FILAS, TABLERO_COLUMNAS, esPosicionValida, posicionesIguales } from '../types';
+import { ID, Color, Posicion, TABLERO_FILAS, TABLERO_COLUMNAS, esPosicionValida, posicionesIguales } from '../../core/types';
 import { Pieza } from './Pieza';
 import { Movimiento } from './Movimiento';
 
