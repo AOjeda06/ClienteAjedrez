@@ -1,15 +1,11 @@
-import { Text, View } from "react-native";
+/**
+ * Punto de entrada de la aplicación
+ */
+
+import React from 'react';
+import { Redirect } from 'expo-router';
 
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+  // Redirige a la pantalla de identificación
+  return <Redirect href="/identificacion" />;
 }
