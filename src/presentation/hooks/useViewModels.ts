@@ -1,18 +1,22 @@
 /**
  * src/presentation/hooks/useViewModels.ts
- * Hooks para los ViewModels (correcciones)
+ * Hooks para los ViewModels
  *
- * usePartida: se suscribe a PartidaIniciada y maneja la inicialización de la VM.
+ * CORRECCIONES:
+ *  - usePartida: lee getPendingPartida() al montar → soluciona la race condition
+ *  - Pasa miNombre al inicializar PartidaVM (fix: nombre/miColor mal asignados)
+ *  - Cleanup: ya NO llama unsubscribeAll() al desmontar para no matar las suscripciones
  */
 
-import { useMemo, useEffect } from 'react';
-import { MenuPrincipalVM } from '../viewmodels/MenuPrincipalVM';
-import { IdentificacionVM } from '../viewmodels/IdentificacionVM';
-import { PartidaVM } from '../viewmodels/PartidaVM';
-import { IAjedrezUseCase } from '../../domain/interfaces/IAjedrezUseCase';
+import { useEffect, useMemo } from 'react';
 import { container } from '../../core/container';
-import { Partida } from '../../domain/entities/Partida';
+import { clearPendingPartida, getPendingPartida } from '../../core/gameState';
 import { Color } from '../../core/types';
+import { Partida } from '../../domain/entities/Partida';
+import { IAjedrezUseCase } from '../../domain/interfaces/IAjedrezUseCase';
+import { IdentificacionVM } from '../viewmodels/IdentificacionVM';
+import { MenuPrincipalVM } from '../viewmodels/MenuPrincipalVM';
+import { PartidaVM } from '../viewmodels/PartidaVM';
 
 /**
  * Helper: safeBind - devuelve una función enlazada si existe, o un noop.
@@ -21,6 +25,44 @@ const safeBind = (obj: any, fnName: string) => {
   if (!obj) return () => {};
   const fn = (obj as any)[fnName];
   return typeof fn === 'function' ? fn.bind(obj) : () => {};
+};
+
+/**
+ * Determina el color (Blanca/Negra) del jugador local comparando el nombre
+ * con los de la partida recibida del servidor.
+ */
+const determinarColorLocal = (partida: Partida, miNombre: string): Color => {
+  try {
+    const nb = partida.jugadorBlancas?.nombre ?? '';
+    const nn = partida.jugadorNegras?.nombre ?? '';
+
+    console.log('[TRACE determinarColorLocal] Comparando nombres:', {
+      miNombre,
+      jugadorBlancas: nb,
+      jugadorNegras: nn
+    });
+
+    // Normalizar nombres (trim y toLowerCase para comparación insensible a mayúsculas/espacios)
+    const miNombreNorm = miNombre?.trim().toLowerCase() ?? '';
+    const nbNorm = nb?.trim().toLowerCase() ?? '';
+    const nnNorm = nn?.trim().toLowerCase() ?? '';
+
+    if (miNombreNorm && nnNorm && miNombreNorm === nnNorm) {
+      console.log('[TRACE determinarColorLocal] Jugador es NEGRAS');
+      return 'Negra';
+    }
+    if (miNombreNorm && nbNorm && miNombreNorm === nbNorm) {
+      console.log('[TRACE determinarColorLocal] Jugador es BLANCAS');
+      return 'Blanca';
+    }
+
+    // Si no hay coincidencia exacta
+    console.warn('[WARN determinarColorLocal] No se encontró coincidencia exacta de nombres, usando fallback');
+    return 'Blanca'; // fallback
+  } catch (err) {
+    console.error('[ERROR determinarColorLocal]', err);
+    return 'Blanca';
+  }
 };
 
 export const useIdentificacion = () => {
@@ -62,68 +104,72 @@ export const usePartida = () => {
   useEffect(() => {
     let mounted = true;
 
+    // ── FIX PRINCIPAL: comprobar si la partida ya llegó antes de que este
+    //    componente montase (race condition). MenuPrincipalVM la guardó via
+    //    setPendingPartida() en gameState.ts justo al recibirla.
+    const pending = getPendingPartida();
+    if (pending) {
+      clearPendingPartida();
+      const miColor = determinarColorLocal(pending.partida, pending.miNombre);
+      try {
+        // ← CORRECCIÓN: pasar también miNombre al inicializar la VM
+        viewModel.inicializarPartida(pending.partida, miColor, pending.miNombre);
+        console.log('[TRACE hook] VM inicializada desde pendingPartida:', {
+          id: pending.partida.id,
+          miColor,
+          miNombre: pending.miNombre,
+        });
+      } catch (err) {
+        console.error('[ERROR hook] inicializarPartida (pending) falló:', err);
+      }
+      // Con la partida ya inicializada no es necesario suscribirse al evento.
+      return;
+    }
+
+    // ── FALLBACK: la partida aún no llegó (caso poco probable, p.ej. navegación
+    //    manual a la pantalla). Nos suscribimos por si acaso.
+    console.log('[TRACE hook] No hay pendingPartida, suscribiendo a subscribePartidaIniciada...');
+
     const onPartidaIniciada = (partida: Partida) => {
-      console.log('[TRACE hook] PartidaIniciada recibida en hook:', { id: partida.id, salaId: partida.salaId });
+      console.log('[TRACE hook] PartidaIniciada recibida en hook:', { id: partida.id });
       if (!mounted) {
         console.warn('[TRACE hook] componente desmontado, ignorando partida');
         return;
       }
 
-      // Determinar color local de forma simple: si el nombre coincide con jugadorBlancas/negras
-      // Intentamos obtener nombre local desde MenuPrincipalVM o IdentificacionVM si están registrados
-      let miNombre: string | undefined;
+      // Intentar obtener nombre local desde container
+      let miNombre = '';
       try {
         if ((container as any).isRegistered?.('MenuPrincipalVM')) {
           const menuVM = (container as any).resolve<MenuPrincipalVM>('MenuPrincipalVM');
-          miNombre = (menuVM as any).nombreJugador ?? miNombre;
+          miNombre = (menuVM as any).nombreJugador ?? '';
         }
-        if (!miNombre && (container as any).isRegistered?.('IdentificacionVM')) {
-          const idVM = (container as any).resolve<IdentificacionVM>('IdentificacionVM');
-          miNombre = (idVM as any).nombre ?? miNombre;
-        }
-      } catch (err) {
+      } catch {
         // noop
       }
 
-      const determinarColor = (): Color => {
-        try {
-          const nb = partida.jugadorBlancas?.nombre ?? '';
-          const nn = partida.jugadorNegras?.nombre ?? '';
-          if (miNombre) {
-            if (miNombre === nn) return 'Negra';
-            if (miNombre === nb) return 'Blanca';
-          }
-          // fallback
-          return 'Blanca';
-        } catch (err) {
-          return 'Blanca';
-        }
-      };
-
-      const miColor = determinarColor();
+      const miColor = determinarColorLocal(partida, miNombre);
       try {
-        viewModel.inicializarPartida(partida, miColor);
-        console.log('[TRACE hook] VM inicializada con partida:', { id: partida.id, miColor });
+        // ← CORRECCIÓN: pasar miNombre al inicializar la VM
+        viewModel.inicializarPartida(partida, miColor, miNombre);
+        console.log('[TRACE hook] VM inicializada (fallback):', { id: partida.id, miColor, miNombre });
       } catch (err) {
-        console.error('[ERROR hook] inicializarPartida falló:', err);
+        console.error('[ERROR hook] inicializarPartida (fallback) falló:', err);
       }
     };
 
-    // Registramos la suscripción en el useCase
     try {
       useCase.subscribePartidaIniciada(onPartidaIniciada);
-      console.log('[TRACE hook] Suscrito a subscribePartidaIniciada en useCase');
     } catch (err) {
       console.error('[ERROR hook] Error suscribiendo a PartidaIniciada:', err);
     }
 
     return () => {
       mounted = false;
-      try {
-        useCase.unsubscribeAll();
-      } catch (err) {
-        // noop
-      }
+      // ── FIX: NO llamar unsubscribeAll() aquí porque mataría todas las
+      //    suscripciones de SignalR necesarias durante la partida (movimientos,
+      //    turno, jaque, etc.). El VM se desuscribe en volverAlMenu() cuando
+      //    el usuario realmente quiere salir.
     };
   }, [useCase, viewModel]);
 

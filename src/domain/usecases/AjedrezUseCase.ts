@@ -169,6 +169,13 @@ export class AjedrezUseCase implements IAjedrezUseCase {
     });
   }
 
+  subscribeTableroActualizado(callback: (tablero: Tablero) => void): void {
+    console.log('[TRACE usecase] subscribeTableroActualizado registrado');
+    this.ajedrezRepository.onTableroActualizado((tablero) => {
+      callback(tablero);
+    });
+  }
+
   subscribeTurno(callback: (turno: Color, numeroTurno: number) => void): void {
     console.log('[TRACE usecase] subscribeTurno registrado');
     this.ajedrezRepository.onTurnoActualizado((turno, numeroTurno) => {

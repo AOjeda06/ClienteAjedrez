@@ -62,29 +62,32 @@ export class Movimiento {
 
   /**
    * Crea una instancia desde un DTO
+   * Acepta tanto camelCase como PascalCase en las propiedades entrantes
    */
-  static createFromDTO(dto: {
-    id?: ID;
-    piezaId?: ID;
-    origen?: Posicion;
-    destino?: Posicion;
-    piezaCapturada?: ID | null;
-    esEnroque?: boolean;
-    esPromocion?: boolean;
-    confirmado?: boolean;
-  }): Movimiento {
-    if (!dto.id || !dto.piezaId || !dto.origen || !dto.destino) {
+  static createFromDTO(dto: any): Movimiento {
+    // Aceptar PascalCase o camelCase
+    const id = dto.id ?? dto.Id;
+    const piezaId = dto.piezaId ?? dto.PiezaId;
+    const origen = dto.origen ?? dto.Origen;
+    const destino = dto.destino ?? dto.Destino;
+    const piezaCapturada = dto.piezaCapturada ?? dto.PiezaCapturada ?? null;
+    const esEnroque = dto.esEnroque ?? dto.EsEnroque ?? false;
+    const esPromocion = dto.esPromocion ?? dto.EsPromocion ?? false;
+    const confirmado = dto.confirmado ?? dto.Confirmado ?? false;
+
+    if (!id || !piezaId || !origen || !destino) {
       throw new Error('DTO incompleto para crear Movimiento');
     }
+
     return new Movimiento({
-      id: dto.id,
-      piezaId: dto.piezaId,
-      origen: dto.origen,
-      destino: dto.destino,
-      piezaCapturada: dto.piezaCapturada,
-      esEnroque: dto.esEnroque,
-      esPromocion: dto.esPromocion,
-      confirmado: dto.confirmado,
+      id,
+      piezaId,
+      origen,
+      destino,
+      piezaCapturada,
+      esEnroque,
+      esPromocion,
+      confirmado,
     });
   }
 }

@@ -4,27 +4,23 @@
 
 import React from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  Alert,
   Modal,
-  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { Color, Posicion, TipoPieza } from '../../core/types';
 import { Pieza } from '../../domain/entities/Pieza';
 import { Tablero } from '../../domain/entities/Tablero';
-import { Posicion, TipoPieza, Color, posicionesIguales } from '../../core/types';
 
 // Colores y estilos
 const CASILLA_BLANCA = '#F0D9B5';
 const CASILLA_NEGRA = '#B58863';
 const CASILLA_SELECCIONADA = '#BACA44';
-const MOVIMIENTO_POSIBLE = '#5CB85C';
-const COLOR_PRIMARIO = '#2196F3';
-const COLOR_ERROR = '#F44336';
+const MOVIMIENTO_POSIBLE = '#7CB342'; // Verde para movimientos posibles
+const COLOR_ERROR = '#F44336'; // Rojo para errores
 
 const estilos = StyleSheet.create({
   container: {
@@ -35,396 +31,362 @@ const estilos = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#8B7355',
     backgroundColor: '#654321',
+    marginBottom: 20,
+    alignSelf: 'center',
   },
   fila: {
     flexDirection: 'row',
   },
   casilla: {
-    width: 45,
-    height: 45,
+    width: 40, // Ajustar según pantalla, idealmente usar Dimensions
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 0.5,
-    borderColor: '#666',
   },
-  pieza: {
-    fontSize: 32,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginVertical: 8,
-    borderRadius: 5,
-    fontSize: 16,
+  piezaTexto: {
+    fontSize: 28,
   },
   boton: {
-    backgroundColor: COLOR_PRIMARIO,
-    padding: 12,
-    marginVertical: 8,
+    backgroundColor: '#2196F3',
+    padding: 10,
     borderRadius: 5,
+    margin: 5,
     alignItems: 'center',
   },
   botonTexto: {
-    color: '#fff',
-    fontSize: 16,
+    color: 'white',
     fontWeight: 'bold',
   },
   botonDeshabilitado: {
     backgroundColor: '#ccc',
   },
+  botonAmarillo: {
+    backgroundColor: '#FFC107',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  tituloModal: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+    width: '100%',
+    borderRadius: 5,
+  },
   error: {
-    color: COLOR_ERROR,
-    marginVertical: 8,
-    fontSize: 14,
-  },
-  info: {
-    fontSize: 14,
-    color: '#666',
-    marginVertical: 4,
-  },
+    color: 'red',
+    marginBottom: 10,
+  }
 });
 
-// Componente: Casilla del tablero
+// Helpers visuales para piezas
+const getSimboloPieza = (tipo: TipoPieza, color: Color) => {
+    const simbolos: any = {
+        'Peon': { 'Blanca': '♙', 'Negra': '♟' },
+        'Torre': { 'Blanca': '♖', 'Negra': '♜' },
+        'Caballo': { 'Blanca': '♘', 'Negra': '♞' },
+        'Alfil': { 'Blanca': '♗', 'Negra': '♝' },
+        'Reina': { 'Blanca': '♕', 'Negra': '♛' },
+        'Rey': { 'Blanca': '♔', 'Negra': '♚' },
+    };
+    return simbolos[tipo]?.[color] || '?';
+};
+
 interface CasillaProps {
-  posicion: Posicion;
-  pieza?: Pieza | null;
-  seleccionada?: boolean;
-  movimientoPosible?: boolean;
-  onPress?: (posicion: Posicion) => void;
-  miColor?: Color;
+    fila: number;
+    columna: number;
+    esBlanca: boolean;
+    pieza: Pieza | null;
+    esSeleccionada: boolean;
+    esMovimientoPosible: boolean;
+    onPress: () => void;
 }
 
-export const Casilla: React.FC<CasillaProps> = ({
-  posicion,
-  pieza,
-  seleccionada,
-  movimientoPosible,
-  onPress,
-  miColor,
-}) => {
-  const esBlanca = (posicion.fila + posicion.columna) % 2 === 0;
-  let backgroundColor = esBlanca ? CASILLA_BLANCA : CASILLA_NEGRA;
+const Casilla: React.FC<CasillaProps> = ({ fila, columna, esBlanca, pieza, esSeleccionada, esMovimientoPosible, onPress }) => {
+    // Prioridad: Seleccionada > Movimiento Posible > Color normal
+    let backgroundColor = esBlanca ? CASILLA_BLANCA : CASILLA_NEGRA;
+    if (esMovimientoPosible) backgroundColor = MOVIMIENTO_POSIBLE;
+    if (esSeleccionada) backgroundColor = CASILLA_SELECCIONADA;
 
-  if (seleccionada) {
-    backgroundColor = CASILLA_SELECCIONADA;
-  } else if (movimientoPosible) {
-    backgroundColor = MOVIMIENTO_POSIBLE;
-  }
-
-  return (
-    <TouchableOpacity
-      style={[estilos.casilla, { backgroundColor }]}
-      onPress={() => onPress?.(posicion)}
-    >
-      {pieza && <PiezaComponent tipo={pieza.tipo} color={pieza.color} />}
-    </TouchableOpacity>
-  );
+    return (
+        <TouchableOpacity style={[estilos.casilla, { backgroundColor }]} onPress={onPress}>
+            {pieza && (
+                <Text style={[estilos.piezaTexto, { color: pieza.color === 'Blanca' ? '#fff' : '#000', textShadowColor: '#000', textShadowRadius: 1 }]}>
+                    {getSimboloPieza(pieza.tipo, pieza.color)}
+                </Text>
+            )}
+        </TouchableOpacity>
+    );
 };
 
-// Componente: Pieza visual
-interface PiezaComponentProps {
-  tipo: TipoPieza;
-  color: Color;
-  size?: number;
-}
-
-const piezasEmojis: Record<TipoPieza, Record<Color, string>> = {
-  Peon: { Blanca: '♙', Negra: '♟' },
-  Torre: { Blanca: '♖', Negra: '♜' },
-  Caballo: { Blanca: '♘', Negra: '♞' },
-  Alfil: { Blanca: '♗', Negra: '♝' },
-  Reina: { Blanca: '♕', Negra: '♛' },
-  Rey: { Blanca: '♔', Negra: '♚' },
-};
-
-export const PiezaComponent: React.FC<PiezaComponentProps> = ({ tipo, color, size = 32 }) => {
-  return (
-    <Text style={[estilos.pieza, { fontSize: size }]}>
-      {piezasEmojis[tipo]?.[color] || '?'}
-    </Text>
-  );
-};
-
-// Componente: Tablero completo
 interface TableroComponentProps {
-  tablero: Tablero;
-  piezaSeleccionada?: Pieza | null;
-  movimientosPosibles?: Posicion[];
-  onCasillaPress: (posicion: Posicion) => void;
-  miColor: Color;
+    tablero: Tablero;
+    miColor: Color | null;
+    piezaSeleccionada: Pieza | null;
+    movimientosPosibles: Posicion[];
+    onCasillaPress: (posicion: Posicion) => void;
 }
 
 export const TableroComponent: React.FC<TableroComponentProps> = ({
-  tablero,
-  piezaSeleccionada,
-  movimientosPosibles = [],
-  onCasillaPress,
-  miColor,
+    tablero,
+    miColor,
+    piezaSeleccionada,
+    movimientosPosibles,
+    onCasillaPress
 }) => {
-  const filas = [];
-  const esVertidoInvertido = miColor === 'Negra';
-
-  for (let fila = 0; fila < 8; fila++) {
-    const columnas = [];
-    const filaActual = esVertidoInvertido ? 7 - fila : fila;
-
-    for (let columna = 0; columna < 8; columna++) {
-      const columnaActual = esVertidoInvertido ? 7 - columna : columna;
-      const posicion = { fila: filaActual, columna: columnaActual };
-      const pieza = tablero.obtenerPieza(posicion);
-      const seleccionada = piezaSeleccionada && posicionesIguales(piezaSeleccionada.posicion, posicion);
-      const movimientoPosible = movimientosPosibles.some(m => posicionesIguales(m, posicion));
-
-      columnas.push(
-        <Casilla
-          key={`${fila}-${columna}`}
-          posicion={posicion}
-          pieza={pieza}
-          seleccionada={seleccionada}
-          movimientoPosible={movimientoPosible}
-          onPress={onCasillaPress}
-          miColor={miColor}
-        />
-      );
+    // Si soy negras, invierto el orden de renderizado (fila 0 abajo, fila 7 arriba -> visualmente)
+    // Lógica estándar: Fila 7 (Negras) arriba, Fila 0 (Blancas) abajo.
+    // Si soy Negras: Quiero ver Fila 0 arriba, Fila 7 abajo.
+    const esInvertido = miColor === 'Negra';
+    
+    // Generar índices 0..7
+    let filas = Array.from({ length: 8 }, (_, i) => i); // [0,1,2,3,4,5,6,7]
+    
+    // Orden visual: normalmente se dibuja de arriba a abajo.
+    // Arriba es Fila 7. Abajo es Fila 0.
+    // Por tanto, el array a iterar debe ser [7,6,5...0].
+    filas = filas.reverse(); // [7, 6 ... 0] -> Renderizado estándar
+    
+    // Si está invertido (soy Negra), quiero ver mi lado (Fila 7) abajo.
+    // Entonces arriba debe estar la Fila 0.
+    // Invertimos de nuevo el array de renderizado.
+    if (esInvertido) {
+        filas = filas.reverse(); // [0, 1 ... 7] -> Arriba Fila 0
     }
 
-    filas.push(
-      <View key={`fila-${fila}`} style={estilos.fila}>
-        {columnas}
-      </View>
+    // Para las columnas: Izq a Der. 0 a 7.
+    // Si soy Negra, la col 0 (a) está a la derecha? No, tablero girado 180 grados.
+    // Col 7 (h) a la izquierda.
+    let columnas = Array.from({ length: 8 }, (_, i) => i);
+    if (esInvertido) {
+        columnas = columnas.reverse();
+    }
+
+    return (
+        <View style={estilos.tablero}>
+            {filas.map((fila) => (
+                <View key={fila} style={estilos.fila}>
+                    {columnas.map((columna) => {
+                        const posicion = { fila, columna };
+                        const pieza = tablero.obtenerPieza(posicion);
+                        // Tablero ajedrez: (fila+col) par -> blanca? No, depende de convención.
+                        // Casilla a1 (0,0) es Negra. b1 (0,1) es Blanca.
+                        // Suma par -> Negra. Suma impar -> Blanca.
+                        const esCasillaBlanca = (fila + columna) % 2 !== 0;
+
+                        const esSeleccionada = piezaSeleccionada
+                            ? (piezaSeleccionada.posicion.fila === fila && piezaSeleccionada.posicion.columna === columna)
+                            : false;
+
+                        // Verificar si esta posición es un movimiento posible
+                        const esMovimientoPosible = movimientosPosibles.some(
+                            m => m.fila === fila && m.columna === columna
+                        );
+
+                        return (
+                            <Casilla
+                                key={`${fila}-${columna}`}
+                                fila={fila}
+                                columna={columna}
+                                esBlanca={esCasillaBlanca}
+                                pieza={pieza}
+                                esSeleccionada={esSeleccionada}
+                                esMovimientoPosible={esMovimientoPosible}
+                                onPress={() => onCasillaPress(posicion)}
+                            />
+                        );
+                    })}
+                </View>
+            ))}
+        </View>
     );
-  }
-
-  return <View style={estilos.tablero}>{filas}</View>;
 };
 
-// Componente: Información de la partida
-interface InfoPartidaProps {
-  nombreOponente: string;
-  tiempoTranscurrido: number;
-  numeroTurnos: number;
-  mensajeTurno?: string | null;
-  mensajeJaque?: string | null;
-}
+// ... BotonesAccion, ModalPromocion, ModalFinPartida, InputNombre, Boton ...
+// (Se asumen sin cambios lógicos mayores, solo se mantienen para completar el archivo si se requiere)
 
-export const InfoPartida: React.FC<InfoPartidaProps> = ({
-  nombreOponente,
-  tiempoTranscurrido,
-  numeroTurnos,
-  mensajeTurno,
-  mensajeJaque,
-}) => {
-  const minutos = Math.floor(tiempoTranscurrido / 60);
-  const segundos = tiempoTranscurrido % 60;
-
-  return (
-    <View style={{ padding: 16, backgroundColor: '#f5f5f5', borderBottomWidth: 1, borderColor: '#ccc' }}>
-      <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-        {nombreOponente}
-      </Text>
-      <Text style={estilos.info}>
-        Tiempo: {minutos}:{segundos.toString().padStart(2, '0')} | Turnos: {numeroTurnos}
-      </Text>
-      {mensajeTurno && <Text style={estilos.info}>{mensajeTurno}</Text>}
-      {mensajeJaque && <Text style={{ ...estilos.info, color: COLOR_ERROR, fontWeight: 'bold' }}>
-        {mensajeJaque}
-      </Text>}
-    </View>
-  );
-};
-
-// Componente: Botones de acción
 interface BotonesAccionProps {
-  onTablas: () => void;
-  onRendirse: () => void;
-  tablasOfrecidas?: boolean;
-  solicitadasTablas?: boolean;
+    confirmarMovimiento: () => void;
+    deshacerMovimiento: () => void;
+    solicitarTablas: () => void;
+    retirarTablas: () => void;
+    rendirse: () => void;
+    hayMovimientoPendiente: boolean;
+    tablasOfrecidas: boolean; // Si me están ofreciendo tablas
+    solicitadasTablas: boolean; // Si yo solicité
 }
 
 export const BotonesAccion: React.FC<BotonesAccionProps> = ({
-  onTablas,
-  onRendirse,
-  tablasOfrecidas,
-  solicitadasTablas,
+    confirmarMovimiento,
+    deshacerMovimiento,
+    solicitarTablas,
+    retirarTablas,
+    rendirse,
+    hayMovimientoPendiente,
+    tablasOfrecidas,
+    solicitadasTablas
 }) => {
-  return (
-    <View style={{ flexDirection: 'row', gap: 8, padding: 12 }}>
-      <TouchableOpacity
-        style={[estilos.boton, solicitadasTablas && { backgroundColor: '#FF9800' }]}
-        onPress={onTablas}
-      >
-        <Text style={estilos.botonTexto}>
-          {solicitadasTablas ? 'Cancelar Tablas' : 'Ofrecer Tablas'}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[estilos.boton, { backgroundColor: COLOR_ERROR }]} onPress={onRendirse}>
-        <Text style={estilos.botonTexto}>Rendirse</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-// Componente: Contador de piezas eliminadas
-interface ContadorPiezasProps {
-  piezasEliminadas: Map<TipoPieza, number>;
-  color: Color;
-}
-
-export const ContadorPiezas: React.FC<ContadorPiezasProps> = ({ piezasEliminadas, color }) => {
-  const piezas: TipoPieza[] = ['Peon', 'Torre', 'Caballo', 'Alfil', 'Reina'];
-  const items = [];
-
-  for (const tipo of piezas) {
-    const cantidad = piezasEliminadas.get(tipo) || 0;
-    if (cantidad > 0) {
-      items.push(
-        <View key={tipo} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 4 }}>
-          <PiezaComponent tipo={tipo} color={color} size={20} />
-          <Text style={{ marginLeft: 2 }}>x{cantidad}</Text>
+    return (
+        <View>
+            <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                <Boton 
+                    title="Confirmar" 
+                    onPress={confirmarMovimiento} 
+                    disabled={!hayMovimientoPendiente} 
+                    style={!hayMovimientoPendiente ? estilos.botonDeshabilitado : {}}
+                />
+                <Boton 
+                    title="Deshacer" 
+                    onPress={deshacerMovimiento} 
+                    disabled={!hayMovimientoPendiente}
+                    style={!hayMovimientoPendiente ? estilos.botonDeshabilitado : {}}
+                />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
+                {tablasOfrecidas ? (
+                    <Boton 
+                        title="Aceptar Tablas" 
+                        onPress={solicitarTablas} // Al solicitar si ya hay oferta, se acepta
+                        style={estilos.botonAmarillo}
+                    />
+                ) : (
+                    <Boton 
+                        title={solicitadasTablas ? "Retirar Tablas" : "Ofrecer Tablas"} 
+                        onPress={solicitadasTablas ? retirarTablas : solicitarTablas} 
+                        style={solicitadasTablas ? estilos.botonDeshabilitado : {}}
+                    />
+                )}
+                <Boton title="Rendirse" onPress={rendirse} style={{ backgroundColor: COLOR_ERROR }} />
+            </View>
         </View>
-      );
-    }
-  }
-
-  return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 8 }}>
-      {items}
-    </View>
-  );
+    );
 };
 
-// Componente: Modal de promoción
 interface ModalPromocionProps {
-  visible: boolean;
-  onPromocion: (tipo: TipoPieza) => void;
+    visible: boolean;
+    onPromocion: (tipo: TipoPieza) => void;
 }
 
 export const ModalPromocion: React.FC<ModalPromocionProps> = ({ visible, onPromocion }) => {
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-    >
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 10, width: '80%' }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16 }}>
-            Promoción de Peón
-          </Text>
-          <Text style={{ marginBottom: 16, color: '#666' }}>
-            Selecciona la pieza a la que deseas promover:
-          </Text>
-          {(['Torre', 'Caballo', 'Alfil', 'Reina'] as TipoPieza[]).map(tipo => (
-            <TouchableOpacity
-              key={tipo}
-              style={[estilos.boton, { marginVertical: 6 }]}
-              onPress={() => onPromocion(tipo)}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <PiezaComponent tipo={tipo} color="Blanca" />
-                <Text style={estilos.botonTexto}>{tipo}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    </Modal>
-  );
+    return (
+        <Modal visible={visible} transparent animationType="slide">
+            <View style={estilos.modalContainer}>
+                <View style={estilos.modalContent}>
+                    <Text style={estilos.tituloModal}>Promoción de Peón</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                        {['Reina', 'Torre', 'Alfil', 'Caballo'].map((tipo) => (
+                            <TouchableOpacity key={tipo} onPress={() => onPromocion(tipo as TipoPieza)} style={estilos.boton}>
+                                <Text style={estilos.botonTexto}>{tipo}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
 };
 
-// Componente: Modal de fin de partida
+// Componente InfoPartida
+interface InfoPartidaProps {
+    nombreOponente: string;
+    tiempoTranscurrido: number;
+    numeroTurnos: number;
+    mensajeTurno: string | null;
+    mensajeJaque: string | null;
+}
+
+export const InfoPartida: React.FC<InfoPartidaProps> = ({
+    nombreOponente,
+    tiempoTranscurrido,
+    numeroTurnos,
+    mensajeTurno,
+    mensajeJaque
+}) => {
+    const minutos = Math.floor(tiempoTranscurrido / 60);
+    const segundos = tiempoTranscurrido % 60;
+
+    return (
+        <View style={{ padding: 12, backgroundColor: '#f5f5f5', borderBottomWidth: 1, borderColor: '#ddd' }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>vs {nombreOponente}</Text>
+            <Text>Tiempo: {minutos}:{segundos.toString().padStart(2, '0')}</Text>
+            <Text>Turno: {numeroTurnos}</Text>
+            {mensajeTurno && <Text style={{ fontWeight: 'bold', marginTop: 4 }}>{mensajeTurno}</Text>}
+            {mensajeJaque && <Text style={{ color: '#F44336', fontWeight: 'bold', marginTop: 4 }}>{mensajeJaque}</Text>}
+        </View>
+    );
+};
+
+// Componente ContadorPiezas
+interface ContadorPiezasProps {
+    piezasEliminadas: Map<TipoPieza, number>;
+    color: Color;
+}
+
+export const ContadorPiezas: React.FC<ContadorPiezasProps> = ({ piezasEliminadas, color }) => {
+    const tipos: TipoPieza[] = ['Peon', 'Torre', 'Caballo', 'Alfil', 'Reina'];
+    return (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 8 }}>
+            {tipos.map(tipo => {
+                const cantidad = piezasEliminadas.get(tipo) || 0;
+                if (cantidad === 0) return null;
+                return (
+                    <View key={tipo} style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
+                        <Text style={{ fontSize: 20 }}>{getSimboloPieza(tipo, color)}</Text>
+                        <Text style={{ marginLeft: 2, fontWeight: 'bold' }}>×{cantidad}</Text>
+                    </View>
+                );
+            })}
+        </View>
+    );
+};
+
+// Componente ModalFinPartida
 interface ModalFinPartidaProps {
-  visible: boolean;
-  resultado: string;
-  tipo: string;
-  onVolverAlMenu: () => void;
+    visible: boolean;
+    resultado: string;
+    tipo: string;
+    onVolverAlMenu: () => void;
 }
 
 export const ModalFinPartida: React.FC<ModalFinPartidaProps> = ({
-  visible,
-  resultado,
-  tipo,
-  onVolverAlMenu,
+    visible,
+    resultado,
+    tipo,
+    onVolverAlMenu
 }) => {
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-    >
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 10, width: '80%' }}>
-          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center', color: COLOR_PRIMARIO }}>
-            {resultado}
-          </Text>
-          <Text style={{ fontSize: 16, marginBottom: 16, textAlign: 'center', color: '#666' }}>
-            Tipo: {tipo}
-          </Text>
-          <TouchableOpacity
-            style={[estilos.boton, { backgroundColor: COLOR_PRIMARIO }]}
-            onPress={onVolverAlMenu}
-          >
-            <Text style={estilos.botonTexto}>Volver al Menú</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
+    return (
+        <Modal visible={visible} transparent animationType="fade">
+            <View style={estilos.modalContainer}>
+                <View style={estilos.modalContent}>
+                    <Text style={estilos.tituloModal}>{resultado}</Text>
+                    <Text style={{ marginBottom: 20 }}>{tipo}</Text>
+                    <Boton title="Volver al Menú" onPress={onVolverAlMenu} />
+                </View>
+            </View>
+        </Modal>
+    );
 };
 
-// Componente: Input de nombre
-interface InputNombreProps {
-  value: string;
-  onChangeText: (text: string) => void;
-  placeholder?: string;
-  error?: string;
-  isLoading?: boolean;
-}
-
-export const InputNombre: React.FC<InputNombreProps> = ({
-  value,
-  onChangeText,
-  placeholder = 'Ingresa tu nombre',
-  error,
-  isLoading,
-}) => {
-  return (
-    <View>
-      <TextInput
-        style={[estilos.input, error && { borderColor: COLOR_ERROR }]}
-        placeholder={placeholder}
-        value={value}
-        onChangeText={onChangeText}
-        editable={!isLoading}
-        maxLength={20}
-      />
-      {error && <Text style={estilos.error}>{error}</Text>}
-    </View>
-  );
-};
-
-// Componente: Botón personalizado
-interface BotonProps {
-  title: string;
-  onPress: () => void;
-  loading?: boolean;
-  disabled?: boolean;
-  style?: any;
-}
-
-export const Boton: React.FC<BotonProps> = ({ title, onPress, loading, disabled, style }) => {
-  return (
-    <TouchableOpacity
-      style={[estilos.boton, disabled && estilos.botonDeshabilitado, style]}
-      onPress={onPress}
-      disabled={disabled || loading}
-    >
-      {loading ? (
-        <ActivityIndicator color="#fff" />
-      ) : (
+// Resto de exports simples
+export const InputNombre: React.FC<any> = (props) => <TextInput {...props} style={estilos.input} />;
+export const Boton: React.FC<any> = ({ title, onPress, disabled, style }) => (
+    <TouchableOpacity onPress={onPress} disabled={disabled} style={[estilos.boton, style]}>
         <Text style={estilos.botonTexto}>{title}</Text>
-      )}
     </TouchableOpacity>
-  );
-};
+);

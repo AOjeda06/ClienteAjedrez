@@ -4,9 +4,9 @@
  * Implementa la lógica completa de validación de movimientos de ajedrez
  */
 
-import { ID, Color, Posicion, TABLERO_FILAS, TABLERO_COLUMNAS, esPosicionValida, posicionesIguales } from '../../core/types';
-import { Pieza } from './Pieza';
+import { Color, ID, Posicion, esPosicionValida, posicionesIguales } from '../../core/types';
 import { Movimiento } from './Movimiento';
+import { Pieza } from './Pieza';
 
 export class Tablero {
   piezas: Pieza[];
@@ -105,7 +105,6 @@ export class Tablero {
 
   /**
    * Calcula movimientos posibles para un peón
-   * Incluye: avance de 1-2 casillas (inicio), captura diagonal, captura al paso
    */
   private calcularMovimientosPeon(pieza: Pieza, movimientos: Posicion[]): void {
     const direccion = pieza.color === 'Blanca' ? -1 : 1;
@@ -152,14 +151,12 @@ export class Tablero {
     const ultimoMovimiento = this.obtenerUltimoMovimiento();
     if (!ultimoMovimiento) return;
 
-    // El último movimiento debe ser un peón que se movió 2 casillas
     const piezaMovida = this.piezas.find(p => p.id === ultimoMovimiento.piezaId);
     if (!piezaMovida || piezaMovida.tipo !== 'Peon') return;
 
     const distancia = Math.abs(ultimoMovimiento.destino.fila - ultimoMovimiento.origen.fila);
     if (distancia !== 2) return;
 
-    // El peón enemigo debe estar al lado
     if (piezaMovida.posicion.fila === pieza.posicion.fila &&
         Math.abs(piezaMovida.posicion.columna - pieza.posicion.columna) === 1) {
       const posAlPaso = {
@@ -173,50 +170,45 @@ export class Tablero {
   }
 
   /**
-   * Calcula movimientos posibles para una torre (movimiento lineal horizontal/vertical)
+   * Calcula movimientos posibles para una torre
    */
   private calcularMovimientosTorre(pieza: Pieza, movimientos: Posicion[]): void {
     const direcciones = [
-      { fila: -1, columna: 0 }, // arriba
-      { fila: 1, columna: 0 },  // abajo
-      { fila: 0, columna: -1 }, // izquierda
-      { fila: 0, columna: 1 },  // derecha
+      { fila: -1, columna: 0 },
+      { fila: 1, columna: 0 },
+      { fila: 0, columna: -1 },
+      { fila: 0, columna: 1 },
     ];
-
     for (const dir of direcciones) {
       this.agregarMovimientosEnLinea(pieza, dir, movimientos);
     }
   }
 
   /**
-   * Calcula movimientos posibles para un alfil (movimiento diagonal)
+   * Calcula movimientos posibles para un alfil
    */
   private calcularMovimientosAlfil(pieza: Pieza, movimientos: Posicion[]): void {
     const direcciones = [
-      { fila: -1, columna: -1 }, // arriba-izquierda
-      { fila: -1, columna: 1 },  // arriba-derecha
-      { fila: 1, columna: -1 },  // abajo-izquierda
-      { fila: 1, columna: 1 },   // abajo-derecha
+      { fila: -1, columna: -1 },
+      { fila: -1, columna: 1 },
+      { fila: 1, columna: -1 },
+      { fila: 1, columna: 1 },
     ];
-
     for (const dir of direcciones) {
       this.agregarMovimientosEnLinea(pieza, dir, movimientos);
     }
   }
 
   /**
-   * Calcula movimientos posibles para una reina (combinación de torre y alfil)
+   * Calcula movimientos posibles para una reina
    */
   private calcularMovimientosReina(pieza: Pieza, movimientos: Posicion[]): void {
     const direcciones = [
-      // Horizontales/Verticales
       { fila: -1, columna: 0 }, { fila: 1, columna: 0 },
       { fila: 0, columna: -1 }, { fila: 0, columna: 1 },
-      // Diagonales
       { fila: -1, columna: -1 }, { fila: -1, columna: 1 },
       { fila: 1, columna: -1 }, { fila: 1, columna: 1 },
     ];
-
     for (const dir of direcciones) {
       this.agregarMovimientosEnLinea(pieza, dir, movimientos);
     }
@@ -224,7 +216,6 @@ export class Tablero {
 
   /**
    * Agrega movimientos en una línea hasta encontrar un obstáculo
-   * Utilizado por Torre, Alfil y Reina
    */
   private agregarMovimientosEnLinea(
     pieza: Pieza,
@@ -240,15 +231,11 @@ export class Tablero {
       const piezaEnCasilla = this.obtenerPieza(posActual);
 
       if (!piezaEnCasilla) {
-        // Casilla vacía, el movimiento es posible
         movimientos.push({ ...posActual });
       } else {
-        // Hay una pieza
         if (piezaEnCasilla.color !== pieza.color) {
-          // Es de color opuesto, puede capturarse
           movimientos.push({ ...posActual });
         }
-        // En cualquier caso, se detiene la búsqueda
         break;
       }
 
@@ -260,25 +247,24 @@ export class Tablero {
   }
 
   /**
-   * Calcula movimientos posibles para un caballo (movimiento en L)
+   * Calcula movimientos posibles para un caballo
    */
   private calcularMovimientosCaballo(pieza: Pieza, movimientos: Posicion[]): void {
-    const desplazamientos = [
+    const saltos = [
       { fila: -2, columna: -1 }, { fila: -2, columna: 1 },
       { fila: -1, columna: -2 }, { fila: -1, columna: 2 },
-      { fila: 1, columna: -2 }, { fila: 1, columna: 2 },
-      { fila: 2, columna: -1 }, { fila: 2, columna: 1 },
+      { fila: 1, columna: -2 },  { fila: 1, columna: 2 },
+      { fila: 2, columna: -1 },  { fila: 2, columna: 1 },
     ];
 
-    for (const despl of desplazamientos) {
+    for (const salto of saltos) {
       const posDestino = {
-        fila: pieza.posicion.fila + despl.fila,
-        columna: pieza.posicion.columna + despl.columna,
+        fila: pieza.posicion.fila + salto.fila,
+        columna: pieza.posicion.columna + salto.columna,
       };
-
       if (esPosicionValida(posDestino)) {
-        const piezaDestino = this.obtenerPieza(posDestino);
-        if (!piezaDestino || piezaDestino.color !== pieza.color) {
+        const piezaEnCasilla = this.obtenerPieza(posDestino);
+        if (!piezaEnCasilla || piezaEnCasilla.color !== pieza.color) {
           movimientos.push(posDestino);
         }
       }
@@ -286,13 +272,13 @@ export class Tablero {
   }
 
   /**
-   * Calcula movimientos posibles para el rey (una casilla en cualquier dirección + enroque)
+   * Calcula movimientos posibles para el rey, incluyendo enroque
    */
   private calcularMovimientosRey(pieza: Pieza, movimientos: Posicion[]): void {
     const desplazamientos = [
       { fila: -1, columna: -1 }, { fila: -1, columna: 0 }, { fila: -1, columna: 1 },
-      { fila: 0, columna: -1 }, { fila: 0, columna: 1 },
-      { fila: 1, columna: -1 }, { fila: 1, columna: 0 }, { fila: 1, columna: 1 },
+      { fila: 0, columna: -1 },                             { fila: 0, columna: 1 },
+      { fila: 1, columna: -1 },  { fila: 1, columna: 0 },  { fila: 1, columna: 1 },
     ];
 
     for (const despl of desplazamientos) {
@@ -300,23 +286,19 @@ export class Tablero {
         fila: pieza.posicion.fila + despl.fila,
         columna: pieza.posicion.columna + despl.columna,
       };
-
       if (esPosicionValida(posDestino)) {
-        const piezaDestino = this.obtenerPieza(posDestino);
-        if (!piezaDestino || piezaDestino.color !== pieza.color) {
+        const piezaEnCasilla = this.obtenerPieza(posDestino);
+        if (!piezaEnCasilla || piezaEnCasilla.color !== pieza.color) {
           movimientos.push(posDestino);
         }
       }
     }
 
-    // Enroque
     this.agregarMovimientosEnroque(pieza, movimientos);
   }
 
   /**
    * Agrega movimientos de enroque si son válidos
-   * Valida: rey y torre no han movido, casillas intermedias están vacías,
-   * el rey no está en jaque ni pasa por jaque
    */
   private agregarMovimientosEnroque(pieza: Pieza, movimientos: Posicion[]): void {
     if (pieza.tipo !== 'Rey' || !pieza.nunca_ha_movido) return;
@@ -324,10 +306,7 @@ export class Tablero {
 
     const filaRey = pieza.posicion.fila;
 
-    // Enroque corto (lado del rey)
     this.intentarEnroqueLado(pieza, filaRey, 7, movimientos, 'corto');
-
-    // Enroque largo (lado de la reina)
     this.intentarEnroqueLado(pieza, filaRey, 0, movimientos, 'largo');
   }
 
@@ -341,32 +320,21 @@ export class Tablero {
     movimientos: Posicion[],
     tipo: 'corto' | 'largo'
   ): void {
-    // Obtiene la torre
     const torre = this.obtenerPieza({ fila: filaRey, columna: columnaRey });
     if (!torre || torre.tipo !== 'Torre' || !torre.nunca_ha_movido) return;
 
-    // Verifica que las casillas intermedias estén vacías
     const inicio = Math.min(rey.posicion.columna, columnaRey);
     const fin = Math.max(rey.posicion.columna, columnaRey);
 
     for (let col = inicio + 1; col < fin; col++) {
-      if (this.obtenerPieza({ fila: filaRey, columna: col })) {
-        return; // Hay una pieza en el camino
-      }
+      if (this.obtenerPieza({ fila: filaRey, columna: col })) return;
     }
 
-    // Para enroque largo, verifica también la casilla más alejada
-    if (tipo === 'largo' && this.obtenerPieza({ fila: filaRey, columna: 1 })) {
-      return;
-    }
+    if (tipo === 'largo' && this.obtenerPieza({ fila: filaRey, columna: 1 })) return;
 
-    // Verifica que el rey no pase por jaque
     const columnaIntermedia = tipo === 'corto' ? 6 : 2;
-    if (this.estaCasillaAtacada({ fila: filaRey, columna: columnaIntermedia }, rey.color)) {
-      return;
-    }
+    if (this.estaCasillaAtacada({ fila: filaRey, columna: columnaIntermedia }, rey.color)) return;
 
-    // Agrega el movimiento de enroque
     const posDestino = tipo === 'corto'
       ? { fila: filaRey, columna: 6 }
       : { fila: filaRey, columna: 2 };
@@ -378,34 +346,26 @@ export class Tablero {
    * Verifica si un movimiento dejaría al rey en jaque
    */
   private movimientoDejaEnJaque(pieza: Pieza, destino: Posicion): boolean {
-    // Simula el movimiento
     const posicionOriginal = pieza.posicion;
     const piezaCapturada = this.obtenerPieza(destino);
 
     pieza.mover(destino);
-    if (piezaCapturada) {
-      piezaCapturada.eliminar();
-    }
+    if (piezaCapturada) piezaCapturada.eliminar();
 
-    // Verifica jaque
     const hayJaque = this.hayJaque(pieza.color);
 
-    // Deshace el movimiento
     pieza.mover(posicionOriginal);
-    if (piezaCapturada) {
-      piezaCapturada.eliminada = false;
-    }
+    if (piezaCapturada) piezaCapturada.eliminada = false;
 
     return hayJaque;
   }
 
   /**
-   * Verifica si hay jaque para un color (el rey está siendo atacado)
+   * Verifica si hay jaque para un color
    */
   hayJaque(color: Color): boolean {
     const rey = this.obtenerRey(color);
     if (!rey) return false;
-
     return this.estaCasillaAtacada(rey.posicion, color);
   }
 
@@ -417,101 +377,66 @@ export class Tablero {
     const piezasAtacantes = this.obtenerPiezasPorColor(colorAtacante);
 
     for (const pieza of piezasAtacantes) {
-      if (this.puedePiezaAtacarCasilla(pieza, casilla)) {
-        return true;
-      }
+      if (this.puedePiezaAtacarCasilla(pieza, casilla)) return true;
     }
-
     return false;
   }
 
   /**
-   * Verifica si una pieza puede atacar una casilla específica
-   * Se diferencia de obtenerMovimientosPosibles porque no filtra por jaque
+   * Verifica si una pieza puede atacar una casilla específica (sin filtrar por jaque)
    */
   private puedePiezaAtacarCasilla(pieza: Pieza, casilla: Posicion): boolean {
     const movimientos: Posicion[] = [];
 
     switch (pieza.tipo) {
-      case 'Peon':
-        this.calcularAtaquesPeon(pieza, movimientos);
-        break;
-      case 'Torre':
-        this.calcularMovimientosTorre(pieza, movimientos);
-        break;
-      case 'Caballo':
-        this.calcularMovimientosCaballo(pieza, movimientos);
-        break;
-      case 'Alfil':
-        this.calcularMovimientosAlfil(pieza, movimientos);
-        break;
-      case 'Reina':
-        this.calcularMovimientosReina(pieza, movimientos);
-        break;
-      case 'Rey':
-        this.calcularAtaquesRey(pieza, movimientos);
-        break;
+      case 'Peon':   this.calcularAtaquesPeon(pieza, movimientos); break;
+      case 'Torre':  this.calcularMovimientosTorre(pieza, movimientos); break;
+      case 'Caballo':this.calcularMovimientosCaballo(pieza, movimientos); break;
+      case 'Alfil':  this.calcularMovimientosAlfil(pieza, movimientos); break;
+      case 'Reina':  this.calcularMovimientosReina(pieza, movimientos); break;
+      case 'Rey':    this.calcularAtaquesRey(pieza, movimientos); break;
     }
 
     return movimientos.some(m => posicionesIguales(m, casilla));
   }
 
-  /**
-   * Calcula los cuadrados que un peón puede atacar (solo diagonales)
-   */
   private calcularAtaquesPeon(pieza: Pieza, movimientos: Posicion[]): void {
     const direccion = pieza.color === 'Blanca' ? -1 : 1;
-
     for (let offset of [-1, 1]) {
       const posAtaque = {
         fila: pieza.posicion.fila + direccion,
         columna: pieza.posicion.columna + offset,
       };
-      if (esPosicionValida(posAtaque)) {
-        movimientos.push(posAtaque);
-      }
+      if (esPosicionValida(posAtaque)) movimientos.push(posAtaque);
     }
   }
 
-  /**
-   * Calcula los cuadrados que el rey puede atacar
-   */
   private calcularAtaquesRey(pieza: Pieza, movimientos: Posicion[]): void {
     const desplazamientos = [
       { fila: -1, columna: -1 }, { fila: -1, columna: 0 }, { fila: -1, columna: 1 },
-      { fila: 0, columna: -1 }, { fila: 0, columna: 1 },
-      { fila: 1, columna: -1 }, { fila: 1, columna: 0 }, { fila: 1, columna: 1 },
+      { fila: 0, columna: -1 },                             { fila: 0, columna: 1 },
+      { fila: 1, columna: -1 },  { fila: 1, columna: 0 },  { fila: 1, columna: 1 },
     ];
-
     for (const despl of desplazamientos) {
       const posDestino = {
         fila: pieza.posicion.fila + despl.fila,
         columna: pieza.posicion.columna + despl.columna,
       };
-
-      if (esPosicionValida(posDestino)) {
-        movimientos.push(posDestino);
-      }
+      if (esPosicionValida(posDestino)) movimientos.push(posDestino);
     }
   }
 
   /**
    * Verifica si hay jaque mate para un color
-   * Condiciones: hay jaque Y no hay movimientos legales disponibles
    */
   hayJaqueMate(color: Color): boolean {
     if (!this.hayJaque(color)) return false;
 
-    // Verifica si hay al menos un movimiento legal disponible
     const piezas = this.obtenerPiezasPorColor(color);
     for (const pieza of piezas) {
-      const movimientosPosibles = this.obtenerMovimientosPosibles(pieza);
-      if (movimientosPosibles.length > 0) {
-        return false; // Hay al menos un movimiento legal
-      }
+      if (this.obtenerMovimientosPosibles(pieza).length > 0) return false;
     }
-
-    return true; // Hay jaque y no hay movimientos legales
+    return true;
   }
 
   /**
@@ -525,14 +450,26 @@ export class Tablero {
   }
 
   /**
-   * Crea una instancia desde un DTO
+   * Crea una instancia desde un DTO (tolerante a PascalCase y camelCase).
+   *
+   * FIX: el servidor envía el historial como "historialMovimientos"
+   * (serialización camelCase de "HistorialMovimientos"), no "movimientos".
+   * Aceptamos ambos nombres para mayor robustez.
    */
-  static createFromDTO(dto: {
-    piezas?: any[];
-    movimientos?: any[];
-  }): Tablero {
-    const piezas = (dto.piezas || []).map(p => Pieza.createFromDTO(p));
-    const movimientos = (dto.movimientos || []).map(m => Movimiento.createFromDTO(m));
+  static createFromDTO(dto: any): Tablero {
+    // Piezas: acepta camelCase (piezas) y PascalCase (Piezas)
+    const piezasRaw: any[] = dto?.piezas ?? dto?.Piezas ?? [];
+
+    // Historial: el servidor envía "historialMovimientos"; también aceptamos "movimientos"
+    // como fallback por compatibilidad con código local
+    const movimientosRaw: any[] = dto?.historialMovimientos
+      ?? dto?.HistorialMovimientos
+      ?? dto?.movimientos
+      ?? dto?.Movimientos
+      ?? [];
+
+    const piezas = piezasRaw.map((p: any) => Pieza.createFromDTO(p));
+    const movimientos = movimientosRaw.map((m: any) => Movimiento.createFromDTO(m));
     return new Tablero(piezas, movimientos);
   }
 
@@ -554,19 +491,10 @@ export class Tablero {
       );
     };
 
-    // Peones blancos
-    for (let col = 0; col < 8; col++) {
-      crearPieza('Peon', 'Blanca', 6, col);
-    }
+    for (let col = 0; col < 8; col++) crearPieza('Peon', 'Blanca', 6, col);
+    for (let col = 0; col < 8; col++) crearPieza('Peon', 'Negra', 1, col);
 
-    // Peones negros
-    for (let col = 0; col < 8; col++) {
-      crearPieza('Peon', 'Negra', 1, col);
-    }
-
-    // Filas 0 y 7: Torres, Caballos, Alfiles, Reina, Rey
     const ordenPiezas: TipoPieza[] = ['Torre', 'Caballo', 'Alfil', 'Reina', 'Rey', 'Alfil', 'Caballo', 'Torre'];
-
     for (let col = 0; col < 8; col++) {
       crearPieza(ordenPiezas[col], 'Negra', 0, col);
       crearPieza(ordenPiezas[col], 'Blanca', 7, col);

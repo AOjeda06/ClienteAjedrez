@@ -3,21 +3,21 @@
  * Pantalla de Partida — versión robusta que evita leer params indefinidos
  */
 
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Text } from 'react-native';
-import { observer } from 'mobx-react-lite';
 import { useLocalSearchParams } from 'expo-router';
+import { observer } from 'mobx-react-lite';
+import React, { useEffect, useRef } from 'react';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { usePartida } from '../hooks/useViewModels';
 import {
-  TableroComponent,
-  InfoPartida,
+  Boton,
   BotonesAccion,
   ContadorPiezas,
-  ModalPromocion,
+  InfoPartida,
   ModalFinPartida,
-  Boton,
+  ModalPromocion,
+  TableroComponent,
 } from '../components/AjedrezComponents';
+import { usePartida } from '../hooks/useViewModels';
 
 // Si en tu proyecto usas NativeStackScreenProps en mobile, puedes mantener la firma
 // pero aquí la pantalla es compatible con ambos entornos (expo-router / navigation).
@@ -250,19 +250,41 @@ export const PartidaScreen = observer((props: any) => {
 
       {/* Botones de acción */}
       <BotonesAccion
-        onTablas={() => {
-          if (state.solicitadasTablas) {
-            actions.retirarTablas();
-          } else {
-            actions.solicitarTablas();
+        confirmarMovimiento={() => {
+          try {
+            actions.confirmarMovimiento();
+          } catch (err) {
+            console.error('Error confirmando movimiento:', err);
           }
         }}
-        onRendirse={() => {
+        deshacerMovimiento={() => {
+          try {
+            actions.deshacerMovimiento();
+          } catch (err) {
+            console.error('Error deshaciendo movimiento:', err);
+          }
+        }}
+        solicitarTablas={() => {
+          try {
+            actions.solicitarTablas();
+          } catch (err) {
+            console.error('Error solicitando tablas:', err);
+          }
+        }}
+        retirarTablas={() => {
+          try {
+            actions.retirarTablas();
+          } catch (err) {
+            console.error('Error retirando tablas:', err);
+          }
+        }}
+        rendirse={() => {
           Alert.alert('¿Estás seguro?', 'Una vez que te rindas, perderás la partida.', [
             { text: 'Cancelar', style: 'cancel' },
             { text: 'Rendirse', onPress: () => actions.rendirse(), style: 'destructive' },
           ]);
         }}
+        hayMovimientoPendiente={!!state.movimientoPendiente}
         tablasOfrecidas={state.tablasOfrecidas}
         solicitadasTablas={state.solicitadasTablas}
       />
@@ -298,21 +320,6 @@ export const PartidaScreen = observer((props: any) => {
           }
         }}
       />
-
-      {/* Pie con botón deshacer */}
-      <View style={estilos.pie}>
-        <Boton
-          title="Deshacer Último Movimiento"
-          onPress={() => {
-            try {
-              actions.deshacerMovimiento();
-            } catch (err) {
-              console.error('Error deshaciendo movimiento:', err);
-            }
-          }}
-          style={{ backgroundColor: '#FF9800' }}
-        />
-      </View>
     </View>
   );
 });

@@ -1,9 +1,13 @@
 /**
  * Entidad Pieza
  * Representa una pieza de ajedrez en el tablero
+ *
+ * FIX en createFromDTO: acepta tanto camelCase (id, tipo, color, posicion)
+ * como PascalCase (Id, Tipo, Color, Posicion) para ser robusto ante distintas
+ * configuraciones del serializador JSON del servidor.
  */
 
-import { ID, Color, TipoPieza, Posicion } from '../types';
+import { Color, ID, Posicion, TipoPieza } from '../../core/types';
 
 export interface PiezaProps {
   id: ID;
@@ -21,8 +25,8 @@ export class Pieza {
   eliminada: boolean;
 
   /**
-   * Piezas blancas nunca se han movido si están en fila 1
-   * Piezas negras nunca se han movido si están en fila 6
+   * Piezas blancas nunca se han movido si están en fila 7 (posición inicial)
+   * Piezas negras nunca se han movido si están en fila 0 (posición inicial)
    * Esta propiedad se usa para validar el enroque
    */
   nunca_ha_movido: boolean;
@@ -34,7 +38,6 @@ export class Pieza {
     this.posicion = props.posicion;
     this.eliminada = props.eliminada ?? false;
 
-    // Determina si la pieza nunca se ha movido según su posición inicial
     if (props.color === 'Blanca' && props.posicion.fila === 7) {
       this.nunca_ha_movido = true;
     } else if (props.color === 'Negra' && props.posicion.fila === 0) {
@@ -84,24 +87,67 @@ export class Pieza {
   }
 
   /**
-   * Crea una instancia desde un DTO
+   * Crea una instancia desde un DTO.
+   *
+   * FIX: acepta tanto camelCase (enviado por SignalR con serialización por defecto
+   * de ASP.NET Core) como PascalCase (por si el servidor tiene otra configuración).
+   * También normaliza la posición (fila/columna o Fila/Columna).
+   * Maneja tipos numéricos para TipoPieza y Color, mapeándolos a strings.
    */
-  static createFromDTO(dto: {
-    id?: ID;
-    tipo?: TipoPieza;
-    color?: Color;
-    posicion?: Posicion;
-    eliminada?: boolean;
-  }): Pieza {
-    if (!dto.id || !dto.tipo || !dto.color || !dto.posicion) {
-      throw new Error('DTO incompleto para crear Pieza');
+  static createFromDTO(dto: any): Pieza {
+    if (!dto) throw new Error('DTO nulo para crear Pieza');
+
+    // Leer id con tolerancia a ambas convenciones
+    const id: ID = dto.id ?? dto.Id;
+    const tipoRaw = dto.tipo ?? dto.Tipo;
+    const colorRaw = dto.color ?? dto.Color;
+    const eliminada: boolean = dto.eliminada ?? dto.Eliminada ?? false;
+
+    // Mapear tipo si es numérico
+    let tipo: TipoPieza;
+    if (typeof tipoRaw === 'number') {
+      const tipoMap: Record<number, TipoPieza> = {
+        0: 'Peon',
+        1: 'Torre',
+        2: 'Caballo',
+        3: 'Alfil',
+        4: 'Reina',
+        5: 'Rey'
+      };
+      tipo = tipoMap[tipoRaw];
+    } else {
+      tipo = tipoRaw;
     }
-    return new Pieza({
-      id: dto.id,
-      tipo: dto.tipo,
-      color: dto.color,
-      posicion: dto.posicion,
-      eliminada: dto.eliminada,
-    });
+
+    // Mapear color si es numérico
+    let color: Color;
+    if (typeof colorRaw === 'number') {
+      const colorMap: Record<number, Color> = {
+        0: 'Blanca',
+        1: 'Negra'
+      };
+      color = colorMap[colorRaw];
+    } else {
+      color = colorRaw;
+    }
+
+    // Normalizar posición (puede venir como { fila, columna } o { Fila, Columna })
+    const posicionRaw = dto.posicion ?? dto.Posicion;
+    if (!posicionRaw) {
+      throw new Error(`DTO de Pieza sin posición: ${JSON.stringify(dto)}`);
+    }
+    const posicion: Posicion = {
+      fila: posicionRaw.fila ?? posicionRaw.Fila,
+      columna: posicionRaw.columna ?? posicionRaw.Columna,
+    };
+
+    if (id === undefined || id === null) throw new Error(`DTO de Pieza sin id: ${JSON.stringify(dto)}`);
+    if (tipo === undefined || tipo === null) throw new Error(`DTO de Pieza sin tipo: ${JSON.stringify(dto)}`);
+    if (color === undefined || color === null) throw new Error(`DTO de Pieza sin color: ${JSON.stringify(dto)}`);
+    if (posicion.fila === undefined || posicion.columna === undefined) {
+      throw new Error(`Posición incompleta en Pieza: ${JSON.stringify(posicionRaw)}`);
+    }
+
+    return new Pieza({ id, tipo, color, posicion, eliminada });
   }
 }

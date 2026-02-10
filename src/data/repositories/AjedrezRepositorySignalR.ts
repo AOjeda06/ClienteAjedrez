@@ -3,19 +3,19 @@
  * Repositorio SignalR corregido y con trazas para depuración
  */
 
-import { IAjedrezRepository } from '../../domain/repositories/IAjedrezRepository';
-import { SignalRAjedrezDataSource } from '../datasources/SignalRAjedrezDataSource';
-import { Movimiento } from '../../domain/entities/Movimiento';
-import { Tablero } from '../../domain/entities/Tablero';
-import { Sala } from '../../domain/entities/Sala';
-import { Partida } from '../../domain/entities/Partida';
 import { Color, ConnectionState, ResultadoPartida, TipoFinPartida, TipoPieza } from '../../core/types';
+import { Movimiento } from '../../domain/entities/Movimiento';
+import { Partida } from '../../domain/entities/Partida';
+import { Sala } from '../../domain/entities/Sala';
+import { Tablero } from '../../domain/entities/Tablero';
 import {
+  MovimientoDomainMapper,
   PartidaDomainMapper,
   SalaDomainMapper,
-  MovimientoDomainMapper,
   TableroDomainMapper,
 } from '../../domain/mappers/DomainMappers';
+import { IAjedrezRepository } from '../../domain/repositories/IAjedrezRepository';
+import { SignalRAjedrezDataSource } from '../datasources/SignalRAjedrezDataSource';
 
 export class AjedrezRepositorySignalR implements IAjedrezRepository {
   private dataSource: SignalRAjedrezDataSource;
@@ -98,6 +98,10 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
     await this.dataSource.invoke('RetirarReinicio');
   }
 
+  // ───────────────────────────────────────────────
+  // EVENTOS DEL SERVIDOR
+  // ───────────────────────────────────────────────
+
   onSalaCreada(callback: (sala: Sala) => void): void {
     this.dataSource.on('SalaCreada', (dto: any) => {
       console.log('[TRACE repo] onSalaCreada recibido en repo:', dto);
@@ -151,8 +155,18 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
   }
 
   onTurnoActualizado(callback: (turno: Color, numeroTurno: number) => void): void {
-    this.dataSource.on('TurnoActualizado', (turno: Color, numeroTurno: number) => {
-      console.log('[TRACE repo] TurnoActualizado recibido en repo:', turno, numeroTurno);
+    this.dataSource.on('TurnoActualizado', (turnoRaw: any, numeroTurno: number) => {
+      console.log('[TRACE repo] TurnoActualizado recibido en repo:', turnoRaw, numeroTurno);
+
+      // FIX: Convert number to Color string (0 -> 'Blanca', 1 -> 'Negra')
+      let turno: Color;
+      if (typeof turnoRaw === 'number') {
+        turno = turnoRaw === 0 ? 'Blanca' : 'Negra';
+      } else {
+        turno = turnoRaw as Color;
+      }
+
+      console.log('[TRACE repo] Turno convertido:', turno);
       callback(turno, numeroTurno);
     });
   }
@@ -165,8 +179,28 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
   }
 
   onPartidaFinalizada(callback: (resultado: ResultadoPartida, tipo: TipoFinPartida, ganador?: string) => void): void {
-    this.dataSource.on('PartidaFinalizada', (resultado: ResultadoPartida, tipo: TipoFinPartida, ganador?: string) => {
-      console.log('[TRACE repo] PartidaFinalizada recibido en repo:', resultado, tipo, ganador);
+    this.dataSource.on('PartidaFinalizada', (resultadoRaw: any, tipoRaw: any, ganador?: string) => {
+      console.log('[TRACE repo] PartidaFinalizada recibido en repo (raw):', resultadoRaw, tipoRaw, ganador);
+
+      // FIX: Convert enum numbers to strings
+      // ResultadoPartida: 0 = Empate, 1 = VictoriaBlancas, 2 = VictoriaNegras
+      let resultado: ResultadoPartida;
+      if (typeof resultadoRaw === 'number') {
+        resultado = resultadoRaw === 0 ? 'Empate' : resultadoRaw === 1 ? 'Victoria' : 'Derrota';
+      } else {
+        resultado = resultadoRaw as ResultadoPartida;
+      }
+
+      // TipoFinPartida: 0 = JaqueMate, 1 = Tablas, 2 = Rendicion, 3 = Abandono
+      let tipo: TipoFinPartida;
+      if (typeof tipoRaw === 'number') {
+        const tipos: TipoFinPartida[] = ['JaqueMate', 'Tablas', 'Rendicion', 'Abandono'];
+        tipo = tipos[tipoRaw] ?? 'Abandono';
+      } else {
+        tipo = tipoRaw as TipoFinPartida;
+      }
+
+      console.log('[TRACE repo] PartidaFinalizada convertido:', resultado, tipo, ganador);
       callback(resultado, tipo, ganador);
     });
   }
@@ -203,6 +237,18 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
     this.dataSource.on('Error', (error: string) => {
       console.error('[TRACE repo] Error recibido en repo:', error);
       callback(error);
+    });
+  }
+
+  onTableroActualizado(callback: (tablero: Tablero) => void): void {
+    this.dataSource.on('TableroActualizado', (tableroDTO: any) => {
+      console.log('[TRACE repo] TableroActualizado recibido en repo:', tableroDTO);
+      try {
+        const tablero = TableroDomainMapper.toDomain(tableroDTO);
+        callback(tablero);
+      } catch (error) {
+        console.error('[ERROR repo] Error mapeando TableroActualizado:', error, 'DTO:', tableroDTO);
+      }
     });
   }
 

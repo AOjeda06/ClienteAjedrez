@@ -1,0 +1,552 @@
+Listado de rutas de carpetas
+El n£mero de serie del volumen es F0CD-170B
+C:.
+³   estructuraBack.txt
+³   
+ÀÄÄÄServidorAjedrez
+    ³   .gitattributes
+    ³   .gitignore
+    ³   ENTREGA.md
+    ³   README.md
+    ³   ServidorAjedrez.sln
+    ³   
+    ÃÄÄÄ.github
+    ³   ÀÄÄÄworkflows
+    ÃÄÄÄApplication
+    ³   ³   Application.csproj
+    ³   ³   
+    ³   ÃÄÄÄbin
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ³           Application.deps.json
+    ³   ³   ³           Application.dll
+    ³   ³   ³           Application.pdb
+    ³   ³   ³           Domain.dll
+    ³   ³   ³           Domain.pdb
+    ³   ³   ³           
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ÃÄÄÄDTOs
+    ³   ³       JugadorDTO.cs
+    ³   ³       MovimientoDTO.cs
+    ³   ³       PartidaDTO.cs
+    ³   ³       PiezaDTO.cs
+    ³   ³       PosicionDTO.cs
+    ³   ³       SalaDTO.cs
+    ³   ³       TableroDTO.cs
+    ³   ³       
+    ³   ÃÄÄÄobj
+    ³   ³   ³   Application.csproj.nuget.dgspec.json
+    ³   ³   ³   Application.csproj.nuget.g.props
+    ³   ³   ³   Application.csproj.nuget.g.targets
+    ³   ³   ³   project.assets.json
+    ³   ³   ³   project.nuget.cache
+    ³   ³   ³   
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ³       ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³   ³   ³       ³   Applicat.44B5EDA2.Up2Date
+    ³   ³   ³       ³   Application.AssemblyInfo.cs
+    ³   ³   ³       ³   Application.AssemblyInfoInputs.cache
+    ³   ³   ³       ³   Application.assets.cache
+    ³   ³   ³       ³   Application.csproj.AssemblyReference.cache
+    ³   ³   ³       ³   Application.csproj.BuildWithSkipAnalyzers
+    ³   ³   ³       ³   Application.csproj.CoreCompileInputs.cache
+    ³   ³   ³       ³   Application.csproj.FileListAbsolute.txt
+    ³   ³   ³       ³   Application.dll
+    ³   ³   ³       ³   Application.GeneratedMSBuildEditorConfig.editorconfig
+    ³   ³   ³       ³   Application.GlobalUsings.g.cs
+    ³   ³   ³       ³   Application.pdb
+    ³   ³   ³       ³   Application.sourcelink.json
+    ³   ³   ³       ³   
+    ³   ³   ³       ÃÄÄÄref
+    ³   ³   ³       ³       Application.dll
+    ³   ³   ³       ³       
+    ³   ³   ³       ÀÄÄÄrefint
+    ³   ³   ³               Application.dll
+    ³   ³   ³               
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ³           ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³   ³           ³   Application.AssemblyInfo.cs
+    ³   ³           ³   Application.AssemblyInfoInputs.cache
+    ³   ³           ³   Application.GeneratedMSBuildEditorConfig.editorconfig
+    ³   ³           ³   Application.GlobalUsings.g.cs
+    ³   ³           ³   
+    ³   ³           ÃÄÄÄref
+    ³   ³           ÀÄÄÄrefint
+    ³   ÀÄÄÄUseCases
+    ³       ³   AbandonarSalaUseCase.cs
+    ³       ³   ConfirmarMovimientoUseCase.cs
+    ³       ³   CrearSalaUseCase.cs
+    ³       ³   DeshacerMovimientoUseCase.cs
+    ³       ³   IAbandonarSalaUseCase.cs
+    ³       ³   IConfirmarMovimientoUseCase.cs
+    ³       ³   ICrearSalaUseCase.cs
+    ³       ³   IDeshacerMovimientoUseCase.cs
+    ³       ³   IPromocionarPeonUseCase.cs
+    ³       ³   IRealizarMovimientoUseCase.cs
+    ³       ³   IRendirseUseCase.cs
+    ³       ³   IRetirarReinicioUseCase.cs
+    ³       ³   IRetirarTablasUseCase.cs
+    ³       ³   ISolicitarReinicioUseCase.cs
+    ³       ³   ISolicitarTablasUseCase.cs
+    ³       ³   IUnirseSalaUseCase.cs
+    ³       ³   PromocionarPeonUseCase.cs
+    ³       ³   RealizarMovimientoUseCase.cs
+    ³       ³   RendirseUseCase.cs
+    ³       ³   RetirarReinicioUseCase.cs
+    ³       ³   RetirarTablasUseCase.cs
+    ³       ³   SolicitarReinicioUseCase.cs
+    ³       ³   SolicitarTablasUseCase.cs
+    ³       ³   UnirseSalaUseCase.cs
+    ³       ³   
+    ³       ÀÄÄÄMappers
+    ³               MovimientoMapper.cs
+    ³               
+    ÃÄÄÄData
+    ³   ³   Data.csproj
+    ³   ³   
+    ³   ÃÄÄÄbin
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ÀÄÄÄobj
+    ³       ³   Data.csproj.nuget.dgspec.json
+    ³       ³   Data.csproj.nuget.g.props
+    ³       ³   Data.csproj.nuget.g.targets
+    ³       ³   project.assets.json
+    ³       ³   project.nuget.cache
+    ³       ³   
+    ³       ÃÄÄÄDebug
+    ³       ³   ÀÄÄÄnet8.0
+    ³       ³       ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³       ³       ³   Data.AssemblyInfo.cs
+    ³       ³       ³   Data.AssemblyInfoInputs.cache
+    ³       ³       ³   Data.assets.cache
+    ³       ³       ³   Data.GeneratedMSBuildEditorConfig.editorconfig
+    ³       ³       ³   Data.GlobalUsings.g.cs
+    ³       ³       ³   
+    ³       ³       ÃÄÄÄref
+    ³       ³       ÀÄÄÄrefint
+    ³       ÀÄÄÄRelease
+    ³           ÀÄÄÄnet8.0
+    ³               ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³               ³   Data.AssemblyInfo.cs
+    ³               ³   Data.AssemblyInfoInputs.cache
+    ³               ³   Data.GeneratedMSBuildEditorConfig.editorconfig
+    ³               ³   Data.GlobalUsings.g.cs
+    ³               ³   
+    ³               ÃÄÄÄref
+    ³               ÀÄÄÄrefint
+    ÃÄÄÄDI
+    ³   ³   Container.cs
+    ³   ³   DI.csproj
+    ³   ³   
+    ³   ÃÄÄÄbin
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ÀÄÄÄobj
+    ³       ³   DI.csproj.nuget.dgspec.json
+    ³       ³   DI.csproj.nuget.g.props
+    ³       ³   DI.csproj.nuget.g.targets
+    ³       ³   project.assets.json
+    ³       ³   project.nuget.cache
+    ³       ³   
+    ³       ÃÄÄÄDebug
+    ³       ³   ÀÄÄÄnet8.0
+    ³       ³       ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³       ³       ³   DI.AssemblyInfo.cs
+    ³       ³       ³   DI.AssemblyInfoInputs.cache
+    ³       ³       ³   DI.assets.cache
+    ³       ³       ³   DI.GeneratedMSBuildEditorConfig.editorconfig
+    ³       ³       ³   DI.GlobalUsings.g.cs
+    ³       ³       ³   
+    ³       ³       ÃÄÄÄref
+    ³       ³       ÀÄÄÄrefint
+    ³       ÀÄÄÄRelease
+    ³           ÀÄÄÄnet8.0
+    ³               ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³               ³   DI.AssemblyInfo.cs
+    ³               ³   DI.AssemblyInfoInputs.cache
+    ³               ³   DI.GeneratedMSBuildEditorConfig.editorconfig
+    ³               ³   DI.GlobalUsings.g.cs
+    ³               ³   
+    ³               ÃÄÄÄref
+    ³               ÀÄÄÄrefint
+    ÃÄÄÄDomain
+    ³   ³   Domain.csproj
+    ³   ³   
+    ³   ÃÄÄÄbin
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ³           Domain.deps.json
+    ³   ³   ³           Domain.dll
+    ³   ³   ³           Domain.pdb
+    ³   ³   ³           
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ÃÄÄÄEntities
+    ³   ³       Jugador.cs
+    ³   ³       Movimiento.cs
+    ³   ³       Partida.cs
+    ³   ³       Pieza.cs
+    ³   ³       Sala.cs
+    ³   ³       Tablero.cs
+    ³   ³       
+    ³   ÃÄÄÄEnums
+    ³   ³       Color.cs
+    ³   ³       EstadoPartida.cs
+    ³   ³       EstadoSala.cs
+    ³   ³       ResultadoPartida.cs
+    ³   ³       TipoFinPartida.cs
+    ³   ³       TipoPieza.cs
+    ³   ³       
+    ³   ÃÄÄÄExceptions
+    ³   ³       DomainException.cs
+    ³   ³       MovimientoInvalidoException.cs
+    ³   ³       PartidaNoEncontradaException.cs
+    ³   ³       SalaCompletaException.cs
+    ³   ³       SalaNoEncontradaException.cs
+    ³   ³       TurnoInvalidoException.cs
+    ³   ³       
+    ³   ÃÄÄÄInterfaces
+    ³   ³       IConnectionManager.cs
+    ³   ³       
+    ³   ÃÄÄÄobj
+    ³   ³   ³   Domain.csproj.nuget.dgspec.json
+    ³   ³   ³   Domain.csproj.nuget.g.props
+    ³   ³   ³   Domain.csproj.nuget.g.targets
+    ³   ³   ³   project.assets.json
+    ³   ³   ³   project.nuget.cache
+    ³   ³   ³   
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ³       ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³   ³   ³       ³   Domain.AssemblyInfo.cs
+    ³   ³   ³       ³   Domain.AssemblyInfoInputs.cache
+    ³   ³   ³       ³   Domain.assets.cache
+    ³   ³   ³       ³   Domain.csproj.BuildWithSkipAnalyzers
+    ³   ³   ³       ³   Domain.csproj.CoreCompileInputs.cache
+    ³   ³   ³       ³   Domain.csproj.FileListAbsolute.txt
+    ³   ³   ³       ³   Domain.dll
+    ³   ³   ³       ³   Domain.GeneratedMSBuildEditorConfig.editorconfig
+    ³   ³   ³       ³   Domain.GlobalUsings.g.cs
+    ³   ³   ³       ³   Domain.pdb
+    ³   ³   ³       ³   Domain.sourcelink.json
+    ³   ³   ³       ³   
+    ³   ³   ³       ÃÄÄÄref
+    ³   ³   ³       ³       Domain.dll
+    ³   ³   ³       ³       
+    ³   ³   ³       ÀÄÄÄrefint
+    ³   ³   ³               Domain.dll
+    ³   ³   ³               
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ³           ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³   ³           ³   Domain.AssemblyInfo.cs
+    ³   ³           ³   Domain.AssemblyInfoInputs.cache
+    ³   ³           ³   Domain.GeneratedMSBuildEditorConfig.editorconfig
+    ³   ³           ³   Domain.GlobalUsings.g.cs
+    ³   ³           ³   
+    ³   ³           ÃÄÄÄref
+    ³   ³           ÀÄÄÄrefint
+    ³   ÃÄÄÄRepositories
+    ³   ³       IPartidaRepository.cs
+    ³   ³       ISalaRepository.cs
+    ³   ³       
+    ³   ÀÄÄÄValueObjects
+    ³           Posicion.cs
+    ³           
+    ÃÄÄÄInfrastructure
+    ³   ³   Infrastructure.csproj
+    ³   ³   
+    ³   ÃÄÄÄbin
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ³           Application.dll
+    ³   ³   ³           Application.pdb
+    ³   ³   ³           Domain.dll
+    ³   ³   ³           Domain.pdb
+    ³   ³   ³           Infrastructure.deps.json
+    ³   ³   ³           Infrastructure.dll
+    ³   ³   ³           Infrastructure.pdb
+    ³   ³   ³           
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ÃÄÄÄDI
+    ³   ³       DependencyInjection.cs
+    ³   ³       
+    ³   ÃÄÄÄobj
+    ³   ³   ³   Infrastructure.csproj.nuget.dgspec.json
+    ³   ³   ³   Infrastructure.csproj.nuget.g.props
+    ³   ³   ³   Infrastructure.csproj.nuget.g.targets
+    ³   ³   ³   project.assets.json
+    ³   ³   ³   project.nuget.cache
+    ³   ³   ³   
+    ³   ³   ÃÄÄÄDebug
+    ³   ³   ³   ÀÄÄÄnet8.0
+    ³   ³   ³       ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³   ³   ³       ³   Infrastr.15EFFBFE.Up2Date
+    ³   ³   ³       ³   Infrastructure.AssemblyInfo.cs
+    ³   ³   ³       ³   Infrastructure.AssemblyInfoInputs.cache
+    ³   ³   ³       ³   Infrastructure.assets.cache
+    ³   ³   ³       ³   Infrastructure.csproj.AssemblyReference.cache
+    ³   ³   ³       ³   Infrastructure.csproj.BuildWithSkipAnalyzers
+    ³   ³   ³       ³   Infrastructure.csproj.CoreCompileInputs.cache
+    ³   ³   ³       ³   Infrastructure.csproj.FileListAbsolute.txt
+    ³   ³   ³       ³   Infrastructure.dll
+    ³   ³   ³       ³   Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+    ³   ³   ³       ³   Infrastructure.GlobalUsings.g.cs
+    ³   ³   ³       ³   Infrastructure.pdb
+    ³   ³   ³       ³   Infrastructure.sourcelink.json
+    ³   ³   ³       ³   
+    ³   ³   ³       ÃÄÄÄref
+    ³   ³   ³       ³       Infrastructure.dll
+    ³   ³   ³       ³       
+    ³   ³   ³       ÀÄÄÄrefint
+    ³   ³   ³               Infrastructure.dll
+    ³   ³   ³               
+    ³   ³   ÀÄÄÄRelease
+    ³   ³       ÀÄÄÄnet8.0
+    ³   ³           ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+    ³   ³           ³   Infrastructure.AssemblyInfo.cs
+    ³   ³           ³   Infrastructure.AssemblyInfoInputs.cache
+    ³   ³           ³   Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+    ³   ³           ³   Infrastructure.GlobalUsings.g.cs
+    ³   ³           ³   
+    ³   ³           ÃÄÄÄref
+    ³   ³           ÀÄÄÄrefint
+    ³   ÃÄÄÄPersistence
+    ³   ³       InMemoryPartidaRepository.cs
+    ³   ³       InMemorySalaRepository.cs
+    ³   ³       
+    ³   ÀÄÄÄSignalR
+    ³           ConnectionManager.cs
+    ³           
+    ÀÄÄÄServidorAjedrez
+        ³   appsettings.Development.json
+        ³   appsettings.json
+        ³   EstructuraProyecto.txt
+        ³   libman.json
+        ³   Program.cs
+        ³   ServidorAjedrez.csproj
+        ³   ServidorAjedrez.csproj.user
+        ³   
+        ÃÄÄÄbin
+        ³   ÃÄÄÄDebug
+        ³   ³   ÀÄÄÄnet8.0
+        ³   ³           Application.dll
+        ³   ³           Application.pdb
+        ³   ³           appsettings.Development.json
+        ³   ³           appsettings.json
+        ³   ³           Domain.dll
+        ³   ³           Domain.pdb
+        ³   ³           Infrastructure.dll
+        ³   ³           Infrastructure.pdb
+        ³   ³           libman.json
+        ³   ³           Newtonsoft.Json.dll
+        ³   ³           ServidorAjedrez.deps.json
+        ³   ³           ServidorAjedrez.dll
+        ³   ³           ServidorAjedrez.exe
+        ³   ³           ServidorAjedrez.pdb
+        ³   ³           ServidorAjedrez.runtimeconfig.json
+        ³   ³           ServidorAjedrez.staticwebassets.endpoints.json
+        ³   ³           ServidorAjedrez.staticwebassets.runtime.json
+        ³   ³           System.Net.WebSockets.WebSocketProtocol.dll
+        ³   ³           
+        ³   ÀÄÄÄRelease
+        ³       ÀÄÄÄnet8.0
+        ÃÄÄÄHubs
+        ³       AjedrezHub.cs
+        ³       
+        ÃÄÄÄobj
+        ³   ³   project.assets.json
+        ³   ³   project.nuget.cache
+        ³   ³   ServidorAjedrez.csproj.nuget.dgspec.json
+        ³   ³   ServidorAjedrez.csproj.nuget.g.props
+        ³   ³   ServidorAjedrez.csproj.nuget.g.targets
+        ³   ³   
+        ³   ÃÄÄÄDebug
+        ³   ³   ÀÄÄÄnet8.0
+        ³   ³       ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+        ³   ³       ³   ApiEndpoints.json
+        ³   ³       ³   apphost.exe
+        ³   ³       ³   rjimswa.dswa.cache.json
+        ³   ³       ³   rjsmcshtml.dswa.cache.json
+        ³   ³       ³   rjsmrazor.dswa.cache.json
+        ³   ³       ³   rpswa.dswa.cache.json
+        ³   ³       ³   Servidor.03CF50CC.Up2Date
+        ³   ³       ³   ServidorAjedrez.AssemblyInfo.cs
+        ³   ³       ³   ServidorAjedrez.AssemblyInfoInputs.cache
+        ³   ³       ³   ServidorAjedrez.assets.cache
+        ³   ³       ³   ServidorAjedrez.csproj.AssemblyReference.cache
+        ³   ³       ³   ServidorAjedrez.csproj.BuildWithSkipAnalyzers
+        ³   ³       ³   ServidorAjedrez.csproj.CoreCompileInputs.cache
+        ³   ³       ³   ServidorAjedrez.csproj.FileListAbsolute.txt
+        ³   ³       ³   ServidorAjedrez.dll
+        ³   ³       ³   ServidorAjedrez.GeneratedMSBuildEditorConfig.editorconfig
+        ³   ³       ³   ServidorAjedrez.genruntimeconfig.cache
+        ³   ³       ³   ServidorAjedrez.GlobalUsings.g.cs
+        ³   ³       ³   ServidorAjedrez.MvcApplicationPartsAssemblyInfo.cache
+        ³   ³       ³   ServidorAjedrez.pdb
+        ³   ³       ³   ServidorAjedrez.RazorAssemblyInfo.cache
+        ³   ³       ³   ServidorAjedrez.RazorAssemblyInfo.cs
+        ³   ³       ³   ServidorAjedrez.sourcelink.json
+        ³   ³       ³   staticwebassets.build.endpoints.json
+        ³   ³       ³   staticwebassets.build.json
+        ³   ³       ³   staticwebassets.build.json.cache
+        ³   ³       ³   staticwebassets.development.json
+        ³   ³       ³   staticwebassets.references.upToDateCheck.txt
+        ³   ³       ³   staticwebassets.removed.txt
+        ³   ³       ³   staticwebassets.upToDateCheck.txt
+        ³   ³       ³   swae.build.ex.cache
+        ³   ³       ³   
+        ³   ³       ÃÄÄÄref
+        ³   ³       ³       ServidorAjedrez.dll
+        ³   ³       ³       
+        ³   ³       ÃÄÄÄrefint
+        ³   ³       ³       ServidorAjedrez.dll
+        ³   ³       ³       
+        ³   ³       ÃÄÄÄscopedcss
+        ³   ³       ³   ÃÄÄÄbundle
+        ³   ³       ³   ³       ServidorAjedrez.styles.css
+        ³   ³       ³   ³       
+        ³   ³       ³   ÃÄÄÄPages
+        ³   ³       ³   ³   ÀÄÄÄShared
+        ³   ³       ³   ³           _Layout.cshtml.rz.scp.css
+        ³   ³       ³   ³           
+        ³   ³       ³   ÀÄÄÄprojectbundle
+        ³   ³       ³           ServidorAjedrez.bundle.scp.css
+        ³   ³       ³           
+        ³   ³       ÀÄÄÄstaticwebassets
+        ³   ÀÄÄÄRelease
+        ³       ÀÄÄÄnet8.0
+        ³           ³   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+        ³           ³   ServidorAjedrez.AssemblyInfo.cs
+        ³           ³   ServidorAjedrez.AssemblyInfoInputs.cache
+        ³           ³   ServidorAjedrez.GeneratedMSBuildEditorConfig.editorconfig
+        ³           ³   ServidorAjedrez.GlobalUsings.g.cs
+        ³           ³   ServidorAjedrez.RazorAssemblyInfo.cache
+        ³           ³   ServidorAjedrez.RazorAssemblyInfo.cs
+        ³           ³   
+        ³           ÃÄÄÄref
+        ³           ÀÄÄÄrefint
+        ÃÄÄÄPages
+        ³   ³   Error.cshtml
+        ³   ³   Error.cshtml.cs
+        ³   ³   Index.cshtml
+        ³   ³   Index.cshtml.cs
+        ³   ³   MenuPrincipal.cshtml
+        ³   ³   MenuPrincipal.cshtml.cs
+        ³   ³   Partida.cshtml
+        ³   ³   Partida.cshtml.cs
+        ³   ³   Privacy.cshtml
+        ³   ³   Privacy.cshtml.cs
+        ³   ³   _ViewImports.cshtml
+        ³   ³   _ViewStart.cshtml
+        ³   ³   
+        ³   ÀÄÄÄShared
+        ³           _Layout.cshtml
+        ³           _Layout.cshtml.css
+        ³           _ValidationScriptsPartial.cshtml
+        ³           
+        ÃÄÄÄProperties
+        ³       launchSettings.json
+        ³       
+        ÀÄÄÄwwwroot
+            ³   favicon.ico
+            ³   
+            ÃÄÄÄcss
+            ³       site.css
+            ³       
+            ÃÄÄÄjs
+            ³   ³   identificacion.js
+            ³   ³   menuPrincipal.js
+            ³   ³   partida.js
+            ³   ³   site.js
+            ³   ³   
+            ³   ÀÄÄÄsignalr
+            ³       ÀÄÄÄdist
+            ³           ÀÄÄÄbrowser
+            ³                   signalr.js
+            ³                   signalr.min.js
+            ³                   
+            ÀÄÄÄlib
+                ÃÄÄÄbootstrap
+                ³   ³   LICENSE
+                ³   ³   
+                ³   ÀÄÄÄdist
+                ³       ÃÄÄÄcss
+                ³       ³       bootstrap-grid.css
+                ³       ³       bootstrap-grid.css.map
+                ³       ³       bootstrap-grid.min.css
+                ³       ³       bootstrap-grid.min.css.map
+                ³       ³       bootstrap-grid.rtl.css
+                ³       ³       bootstrap-grid.rtl.css.map
+                ³       ³       bootstrap-grid.rtl.min.css
+                ³       ³       bootstrap-grid.rtl.min.css.map
+                ³       ³       bootstrap-reboot.css
+                ³       ³       bootstrap-reboot.css.map
+                ³       ³       bootstrap-reboot.min.css
+                ³       ³       bootstrap-reboot.min.css.map
+                ³       ³       bootstrap-reboot.rtl.css
+                ³       ³       bootstrap-reboot.rtl.css.map
+                ³       ³       bootstrap-reboot.rtl.min.css
+                ³       ³       bootstrap-reboot.rtl.min.css.map
+                ³       ³       bootstrap-utilities.css
+                ³       ³       bootstrap-utilities.css.map
+                ³       ³       bootstrap-utilities.min.css
+                ³       ³       bootstrap-utilities.min.css.map
+                ³       ³       bootstrap-utilities.rtl.css
+                ³       ³       bootstrap-utilities.rtl.css.map
+                ³       ³       bootstrap-utilities.rtl.min.css
+                ³       ³       bootstrap-utilities.rtl.min.css.map
+                ³       ³       bootstrap.css
+                ³       ³       bootstrap.css.map
+                ³       ³       bootstrap.min.css
+                ³       ³       bootstrap.min.css.map
+                ³       ³       bootstrap.rtl.css
+                ³       ³       bootstrap.rtl.css.map
+                ³       ³       bootstrap.rtl.min.css
+                ³       ³       bootstrap.rtl.min.css.map
+                ³       ³       
+                ³       ÀÄÄÄjs
+                ³               bootstrap.bundle.js
+                ³               bootstrap.bundle.js.map
+                ³               bootstrap.bundle.min.js
+                ³               bootstrap.bundle.min.js.map
+                ³               bootstrap.esm.js
+                ³               bootstrap.esm.js.map
+                ³               bootstrap.esm.min.js
+                ³               bootstrap.esm.min.js.map
+                ³               bootstrap.js
+                ³               bootstrap.js.map
+                ³               bootstrap.min.js
+                ³               bootstrap.min.js.map
+                ³               
+                ÃÄÄÄjquery
+                ³   ³   LICENSE.txt
+                ³   ³   
+                ³   ÀÄÄÄdist
+                ³           jquery.js
+                ³           jquery.min.js
+                ³           jquery.min.map
+                ³           
+                ÃÄÄÄjquery-validation
+                ³   ³   LICENSE.md
+                ³   ³   
+                ³   ÀÄÄÄdist
+                ³           additional-methods.js
+                ³           additional-methods.min.js
+                ³           jquery.validate.js
+                ³           jquery.validate.min.js
+                ³           
+                ÀÄÄÄjquery-validation-unobtrusive
+                        jquery.validate.unobtrusive.js
+                        jquery.validate.unobtrusive.min.js
+                        LICENSE.txt
+                        

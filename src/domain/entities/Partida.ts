@@ -3,11 +3,10 @@
  * Representa una partida de ajedrez con toda su lógica de estado
  */
 
-import { ID, Color, EstadoPartida, ResultadoPartida, TipoFinPartida, TipoPieza } from '../types';
+import { Color, EstadoPartida, ID, ResultadoPartida, TipoFinPartida, TipoPieza } from '../types';
 import { Jugador } from './Jugador';
-import { Tablero } from './Tablero';
-import { Pieza } from './Pieza';
 import { Movimiento } from './Movimiento';
+import { Tablero } from './Tablero';
 
 export interface PartidaProps {
   id: ID;
@@ -313,8 +312,8 @@ export class Partida {
     const jugadorNegrasDto = dto.jugadorNegras ?? dto.JugadorNegras ?? null;
 
     // Campos opcionales con nombres alternativos
-    const turnoActual = dto.turnoActual ?? dto.TurnoActual ?? dto.turno ?? dto.Turno ?? 'Blanca';
-    const numeroTurnos = dto.numeroTurnos ?? dto.NumeroTurnos ?? dto.numeroTurnos ?? dto.numeroTurno ?? 0;
+    let turnoActualRaw = dto.turnoActual ?? dto.TurnoActual ?? dto.turno ?? dto.Turno ?? 'Blanca';
+    const numeroTurnos = dto.numeroTurnos ?? dto.NumeroTurnos ?? dto.numeroTurno ?? 0;
     const tiempoTranscurrido = dto.tiempoTranscurrido ?? dto.TiempoTranscurrido ?? 0;
     const estado = dto.estado ?? dto.Estado ?? 'Esperando';
     const resultado = dto.resultado ?? dto.Resultado ?? null;
@@ -326,6 +325,14 @@ export class Partida {
 
     if (!id || !salaId || !tableroDto || !jugadorBlancasDto || !jugadorNegrasDto) {
       throw new Error('DTO incompleto para crear Partida');
+    }
+
+    // Normalizar turnoActual: aceptar string ('Blanca'|'Negra') o número (0 => Blanca, 1 => Negra)
+    let turnoActual: Color;
+    if (typeof turnoActualRaw === 'number') {
+      turnoActual = turnoActualRaw === 1 ? 'Negra' : 'Blanca';
+    } else {
+      turnoActual = String(turnoActualRaw) as Color;
     }
 
     // Mapear subobjetos usando sus helpers

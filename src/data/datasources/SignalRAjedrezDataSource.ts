@@ -8,7 +8,7 @@
  * suscripciones se hayan hecho antes de conectar.
  */
 
-import { HubConnectionBuilder, HubConnection, HttpTransportType, HubConnectionState } from '@microsoft/signalr';
+import { HttpTransportType, HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { ConnectionState } from '../../core/types';
 
 export class SignalRAjedrezDataSource {
@@ -67,13 +67,9 @@ export class SignalRAjedrezDataSource {
 
       // IMPORTANT: si ya había handlers registrados antes de crear la conexión,
       // los atamos ahora al hubConnection para que SignalR los invoque.
-      // Esto evita la condición en la que useCase/repo se suscriben antes de conectar.
       if (this.eventHandlers.size > 0) {
         for (const eventName of this.eventHandlers.keys()) {
           try {
-            // Evitar múltiples attaches: si hubConnection ya tiene handler para el evento,
-            // SignalR no ofrece una API directa para comprobarlo, pero al usar la misma
-            // función de reemisión no duplicamos la lógica interna de emitEvent.
             (this.hubConnection as any).on(eventName, (...args: any[]) => {
               this.emitEvent(eventName, ...args);
             });
@@ -88,6 +84,12 @@ export class SignalRAjedrezDataSource {
       this.connectionState = 'Connected';
       this.emitEvent('connectionStateChanged', 'Connected');
       console.log('[SignalR DS] Conexión establecida (Connected)');
+
+      // Set player name after connecting
+      if (jugadorNombre) {
+        await this.invoke('SetNombreJugador', jugadorNombre);
+        console.log('[SignalR DS] Nombre de jugador establecido:', jugadorNombre);
+      }
     } catch (error) {
       this.connectionState = 'Disconnected';
       console.error('[SignalR DS] Error conectando a SignalR:', error);
@@ -135,7 +137,6 @@ export class SignalRAjedrezDataSource {
     // Si la hubConnection ya existe, también la atamos inmediatamente
     if (this.hubConnection) {
       try {
-        // Aseguramos que el hub reemita a nuestros handlers mediante emitEvent
         (this.hubConnection as any).on(eventName, (...args: any[]) => {
           this.emitEvent(eventName, ...args);
         });

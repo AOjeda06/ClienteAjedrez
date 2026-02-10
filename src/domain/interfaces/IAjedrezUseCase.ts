@@ -31,6 +31,7 @@ export interface IAjedrezUseCase {
   subscribeJugadorUnido(callback: (partida: Partida) => void): void;
   subscribePartidaIniciada(callback: (partida: Partida) => void): void;
   subscribeMovimiento(callback: (movimiento: Movimiento, tablero: Tablero) => void): void;
+  subscribeTableroActualizado(callback: (tablero: Tablero) => void): void;
   subscribeTurno(callback: (turno: Color, numeroTurno: number) => void): void;
   subscribeTablas(callback: (blancas: boolean, negras: boolean) => void): void;
   subscribeFinPartida(callback: (resultado: ResultadoPartida, tipo: TipoFinPartida, ganador?: string) => void): void;

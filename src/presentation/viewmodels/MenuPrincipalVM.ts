@@ -5,10 +5,12 @@
  */
 
 import { makeAutoObservable, runInAction } from 'mobx';
-import { IAjedrezUseCase } from '../../domain/interfaces/IAjedrezUseCase';
 import { ConnectionState } from '../../core/types';
-import { Sala } from '../../domain/entities/Sala';
 import { Partida } from '../../domain/entities/Partida';
+import { Sala } from '../../domain/entities/Sala';
+import { IAjedrezUseCase } from '../../domain/interfaces/IAjedrezUseCase';
+// ← FIX: importar setPendingPartida para resolver la race condition con PartidaScreen
+import { setPendingPartida } from '../../core/gameState';
 
 export class MenuPrincipalVM {
   // Identificación
@@ -43,13 +45,11 @@ export class MenuPrincipalVM {
 
   setNombreSalaCrear(nombre: string): void {
     this.nombreSalaCrear = nombre;
-    // opcional: mantener sincronizado nombreSala si quieres
     this.nombreSala = nombre;
   }
 
   setNombreSalaUnirse(nombre: string): void {
     this.nombreSalaUnirse = nombre;
-    // opcional: mantener sincronizado nombreSala si quieres
     this.nombreSala = nombre;
   }
 
@@ -178,6 +178,12 @@ export class MenuPrincipalVM {
       this.partida = partida;
       this.esperandoOponente = false;
     });
+
+    // ← FIX RACE CONDITION: guardamos la partida ANTES de navegar a PartidaScreen.
+    // Cuando PartidaScreen monte, usePartida() leerá getPendingPartida() e inicializará
+    // el VM inmediatamente, sin necesitar esperar a un nuevo evento PartidaIniciada.
+    setPendingPartida(partida, this.nombreJugador);
+    console.log('[MenuPrincipalVM] Partida guardada como pendiente para PartidaScreen, jugador:', this.nombreJugador);
   }
 
   handleError(error: string): void {
