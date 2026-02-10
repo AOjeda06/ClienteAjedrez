@@ -1,17 +1,27 @@
 /**
+ * src/presentation/viewmodels/MenuPrincipalVM.ts
  * ViewModel para la pantalla del menú principal
- * Gestiona la creación/unión a salas y conexión
+ * (separación de campos para crear/unirse a sala)
  */
 
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import { IAjedrezUseCase } from '../../domain/interfaces/IAjedrezUseCase';
 import { ConnectionState } from '../../core/types';
 import { Sala } from '../../domain/entities/Sala';
 import { Partida } from '../../domain/entities/Partida';
 
 export class MenuPrincipalVM {
+  // Identificación
   nombreJugador: string = '';
+
+  // Campos separados para evitar que escribir en uno afecte al otro
+  nombreSalaCrear: string = '';
+  nombreSalaUnirse: string = '';
+
+  // (opcional) campo histórico/compatibilidad
   nombreSala: string = '';
+
+  // UI / estado
   error: string | null = null;
   isLoading: boolean = false;
   connectionState: ConnectionState = 'Disconnected';
@@ -23,114 +33,173 @@ export class MenuPrincipalVM {
 
   constructor(useCase: IAjedrezUseCase) {
     this.ajedrezUseCase = useCase;
-    makeAutoObservable(this);
+    makeAutoObservable(this, {}, { autoBind: true });
   }
 
+  // Setters
   setNombreJugador(nombre: string): void {
     this.nombreJugador = nombre;
   }
 
-  setNombreSala(nombre: string): void {
+  setNombreSalaCrear(nombre: string): void {
+    this.nombreSalaCrear = nombre;
+    // opcional: mantener sincronizado nombreSala si quieres
     this.nombreSala = nombre;
   }
 
+  setNombreSalaUnirse(nombre: string): void {
+    this.nombreSalaUnirse = nombre;
+    // opcional: mantener sincronizado nombreSala si quieres
+    this.nombreSala = nombre;
+  }
+
+  // Conexión
   async conectar(url: string): Promise<void> {
     try {
-      this.isLoading = true;
-      this.error = null;
+      runInAction(() => {
+        this.isLoading = true;
+        this.error = null;
+      });
 
       if (!this.nombreJugador || this.nombreJugador.trim().length === 0) {
         throw new Error('Debes ingresar tu nombre de jugador');
       }
 
       await this.ajedrezUseCase.conectarJugador(url, this.nombreJugador);
-      this.connectionState = 'Connected';
 
-      // Suscribirse a eventos
+      runInAction(() => {
+        this.connectionState = 'Connected';
+      });
+
+      // Suscripciones
       this.ajedrezUseCase.subscribeSalaCreada(this.handleSalaCreada.bind(this));
       this.ajedrezUseCase.subscribeJugadorUnido(this.handleJugadorUnido.bind(this));
+      this.ajedrezUseCase.subscribePartidaIniciada(this.handleJugadorUnido.bind(this));
       this.ajedrezUseCase.subscribeError(this.handleError.bind(this));
     } catch (error: any) {
-      this.error = error.message || 'Error al conectar';
-      this.connectionState = 'Disconnected';
+      runInAction(() => {
+        this.error = error?.message ?? 'Error al conectar';
+        this.connectionState = 'Disconnected';
+      });
       console.error('Error en conectar:', error);
+      throw error;
     } finally {
-      this.isLoading = false;
+      runInAction(() => {
+        this.isLoading = false;
+      });
     }
   }
 
   async desconectar(): Promise<void> {
     try {
-      this.isLoading = true;
+      runInAction(() => { this.isLoading = true; });
       await this.ajedrezUseCase.desconectarJugador();
-      this.connectionState = 'Disconnected';
+      runInAction(() => {
+        this.connectionState = 'Disconnected';
+      });
       this.ajedrezUseCase.unsubscribeAll();
     } catch (error: any) {
       console.error('Error al desconectar:', error);
+      throw error;
     } finally {
-      this.isLoading = false;
+      runInAction(() => { this.isLoading = false; });
     }
   }
 
+  // Crear sala (usa nombreSalaCrear)
   async crearSala(): Promise<void> {
     try {
-      this.isLoading = true;
-      this.error = null;
+      runInAction(() => {
+        this.isLoading = true;
+        this.error = null;
+      });
 
-      if (!this.nombreSala || this.nombreSala.trim().length === 0) {
+      if (!this.nombreSalaCrear || this.nombreSalaCrear.trim().length === 0) {
         throw new Error('El nombre de la sala no puede estar vacío');
       }
 
-      await this.ajedrezUseCase.crearNuevaSala(this.nombreSala);
-      this.esperandoOponente = true;
+      await this.ajedrezUseCase.crearNuevaSala(this.nombreSalaCrear);
+
+      runInAction(() => {
+        this.esperandoOponente = true;
+      });
     } catch (error: any) {
-      this.error = error.message || 'Error al crear sala';
+      runInAction(() => {
+        this.error = error?.message ?? 'Error al crear sala';
+      });
       console.error('Error en crearSala:', error);
+      throw error;
     } finally {
-      this.isLoading = false;
+      runInAction(() => { this.isLoading = false; });
     }
   }
 
+  // Unirse a sala (usa nombreSalaUnirse)
   async unirseSala(): Promise<void> {
     try {
-      this.isLoading = true;
-      this.error = null;
+      runInAction(() => {
+        this.isLoading = true;
+        this.error = null;
+      });
 
-      if (!this.nombreSala || this.nombreSala.trim().length === 0) {
+      if (!this.nombreSalaUnirse || this.nombreSalaUnirse.trim().length === 0) {
         throw new Error('El nombre de la sala no puede estar vacío');
       }
 
-      await this.ajedrezUseCase.unirseASala(this.nombreSala);
-      this.esperandoOponente = true;
+      if (!this.nombreJugador || this.nombreJugador.trim().length === 0) {
+        throw new Error('Debes ingresar tu nombre de jugador antes de unirte a una sala');
+      }
+
+      await this.ajedrezUseCase.unirseASala(this.nombreSalaUnirse, this.nombreJugador);
+
+      runInAction(() => {
+        this.esperandoOponente = true;
+      });
     } catch (error: any) {
-      this.error = error.message || 'Error al unirse a sala';
+      runInAction(() => {
+        this.error = error?.message ?? 'Error al unirse a sala';
+      });
       console.error('Error en unirseSala:', error);
+      throw error;
     } finally {
-      this.isLoading = false;
+      runInAction(() => { this.isLoading = false; });
     }
   }
 
+  // Handlers de eventos
   handleSalaCreada(sala: Sala): void {
-    this.salaCreada = sala;
+    runInAction(() => {
+      this.salaCreada = sala;
+    });
   }
 
   handleJugadorUnido(partida: Partida): void {
-    this.partida = partida;
-    this.esperandoOponente = false;
+    runInAction(() => {
+      this.partida = partida;
+      this.esperandoOponente = false;
+    });
   }
 
   handleError(error: string): void {
-    this.error = error;
+    runInAction(() => {
+      this.error = error;
+    });
   }
 
   reset(): void {
-    this.nombreJugador = '';
-    this.nombreSala = '';
-    this.error = null;
-    this.isLoading = false;
-    this.connectionState = 'Disconnected';
-    this.salaCreada = null;
-    this.esperandoOponente = false;
-    this.partida = null;
+    runInAction(() => {
+      this.nombreJugador = '';
+      this.nombreSalaCrear = '';
+      this.nombreSalaUnirse = '';
+      this.nombreSala = '';
+      this.error = null;
+      this.isLoading = false;
+      this.connectionState = 'Disconnected';
+      this.salaCreada = null;
+      this.esperandoOponente = false;
+      this.partida = null;
+    });
   }
 }
+
+export default MenuPrincipalVM;

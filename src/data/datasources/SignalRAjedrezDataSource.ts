@@ -1,6 +1,11 @@
 /**
- * SignalR DataSource para Ajedrez
- * Gestiona la conexión con el servidor SignalR
+ * src/data/datasources/SignalRAjedrezDataSource.ts
+ * SignalR DataSource para Ajedrez (envía nombre en query, logs y manejo robusto)
+ *
+ * Corrección clave: cuando se crea hubConnection en start(),
+ * se registran en el hub todos los event handlers previamente guardados
+ * en this.eventHandlers para que los eventos lleguen aunque las
+ * suscripciones se hayan hecho antes de conectar.
  */
 
 import { HubConnectionBuilder, HubConnection, HttpTransportType, HubConnectionState } from '@microsoft/signalr';
@@ -12,12 +17,11 @@ export class SignalRAjedrezDataSource {
   private eventHandlers: Map<string, Function[]> = new Map();
   private connectionState: ConnectionState = 'Disconnected';
 
-  /**
-   * Construye una conexión SignalR
-   */
-  private buildConnection(url: string): HubConnection {
+  private buildConnection(url: string, jugadorNombre?: string): HubConnection {
+    const urlWithName = jugadorNombre ? `${url}${url.includes('?') ? '&' : '?'}nombre=${encodeURIComponent(jugadorNombre)}` : url;
+
     return new HubConnectionBuilder()
-      .withUrl(url, {
+      .withUrl(urlWithName, {
         skipNegotiation: true,
         transport: HttpTransportType.WebSockets,
       })
@@ -25,72 +29,85 @@ export class SignalRAjedrezDataSource {
       .build();
   }
 
-  /**
-   * Inicia la conexión con el servidor
-   */
-  async start(url: string, jugadorNombre: string): Promise<void> {
+  async start(url: string, jugadorNombre?: string): Promise<void> {
     try {
       this.connectionState = 'Connecting';
       this.baseUrl = url;
 
       if (this.hubConnection) {
-        await this.hubConnection.stop();
+        try {
+          await this.hubConnection.stop();
+        } catch (err) {
+          console.warn('[SignalR DS] Error al detener conexión previa:', err);
+        }
+        this.hubConnection = null;
       }
 
-      this.hubConnection = this.buildConnection(url);
+      console.log('[SignalR DS] buildConnection con nombre:', jugadorNombre);
+      this.hubConnection = this.buildConnection(url, jugadorNombre);
 
-      // Configurar listeners de reconexión
+      // Re-attach global lifecycle handlers
       this.hubConnection.onreconnecting(() => {
         this.connectionState = 'Reconnecting';
         this.emitEvent('connectionStateChanged', 'Reconnecting');
+        console.log('[SignalR DS] onreconnecting');
       });
 
       this.hubConnection.onreconnected(() => {
         this.connectionState = 'Connected';
         this.emitEvent('connectionStateChanged', 'Connected');
+        console.log('[SignalR DS] onreconnected');
       });
 
       this.hubConnection.onclose(() => {
         this.connectionState = 'Disconnected';
         this.emitEvent('connectionStateChanged', 'Disconnected');
+        console.log('[SignalR DS] onclose');
       });
 
-      await this.hubConnection.start();
+      // IMPORTANT: si ya había handlers registrados antes de crear la conexión,
+      // los atamos ahora al hubConnection para que SignalR los invoque.
+      // Esto evita la condición en la que useCase/repo se suscriben antes de conectar.
+      if (this.eventHandlers.size > 0) {
+        for (const eventName of this.eventHandlers.keys()) {
+          try {
+            // Evitar múltiples attaches: si hubConnection ya tiene handler para el evento,
+            // SignalR no ofrece una API directa para comprobarlo, pero al usar la misma
+            // función de reemisión no duplicamos la lógica interna de emitEvent.
+            (this.hubConnection as any).on(eventName, (...args: any[]) => {
+              this.emitEvent(eventName, ...args);
+            });
+          } catch (err) {
+            console.warn(`[SignalR DS] No se pudo attach event ${eventName} al hub:`, err);
+          }
+        }
+      }
 
+      console.log('[SignalR DS] iniciando hubConnection.start()');
+      await this.hubConnection.start();
       this.connectionState = 'Connected';
       this.emitEvent('connectionStateChanged', 'Connected');
-
-      // Invocar método del servidor para registrar al jugador
-      if (jugadorNombre && jugadorNombre.trim()) {
-        await this.invoke('SetNombreJugador', jugadorNombre);
-      }
+      console.log('[SignalR DS] Conexión establecida (Connected)');
     } catch (error) {
       this.connectionState = 'Disconnected';
-      console.error('Error conectando a SignalR:', error);
+      console.error('[SignalR DS] Error conectando a SignalR:', error);
       throw new Error(`No se pudo conectar a ${url}: ${error}`);
     }
   }
 
-  /**
-   * Detiene la conexión
-   */
   async stop(): Promise<void> {
     try {
       if (this.hubConnection) {
         this.connectionState = 'Disconnected';
         await this.hubConnection.stop();
         this.hubConnection = null;
+        console.log('[SignalR DS] Conexión detenida');
       }
     } catch (error) {
-      console.error('Error deteniendo conexión SignalR:', error);
+      console.error('[SignalR DS] Error deteniendo conexión SignalR:', error);
     }
   }
 
-  /**
-   * Invoca un método en el servidor
-   * @param method Nombre del método a invocar
-   * @param args Argumentos del método
-   */
   async invoke(method: string, ...args: any[]): Promise<void> {
     try {
       if (!this.hubConnection) {
@@ -103,64 +120,59 @@ export class SignalRAjedrezDataSource {
 
       await (this.hubConnection as any).invoke(method, ...args);
     } catch (error) {
-      console.error(`Error invocando ${method}:`, error);
+      console.error(`[SignalR DS] Error invocando ${method}:`, error);
       throw error;
     }
   }
 
-  /**
-   * Se suscribe a un evento del servidor
-   */
   on(eventName: string, handler: Function): void {
-    if (!this.hubConnection) {
-      console.warn('Intentando registrar listener sin conexión');
-      return;
-    }
-
+    // Guardamos el handler localmente siempre
     if (!this.eventHandlers.has(eventName)) {
       this.eventHandlers.set(eventName, []);
-
-      // Primera suscripción a este evento
-      (this.hubConnection as any).on(eventName, (...args: any[]) => {
-        this.emitEvent(eventName, ...args);
-      });
     }
+    this.eventHandlers.get(eventName)!.push(handler);
 
-    const handlers = this.eventHandlers.get(eventName)!;
-    handlers.push(handler);
+    // Si la hubConnection ya existe, también la atamos inmediatamente
+    if (this.hubConnection) {
+      try {
+        // Aseguramos que el hub reemita a nuestros handlers mediante emitEvent
+        (this.hubConnection as any).on(eventName, (...args: any[]) => {
+          this.emitEvent(eventName, ...args);
+        });
+      } catch (err) {
+        console.warn(`[SignalR DS] Error al registrar handler en hubConnection para ${eventName}:`, err);
+      }
+    }
   }
 
-  /**
-   * Se desuscribe de un evento
-   */
   off(eventName: string): void {
     if (this.hubConnection) {
-      (this.hubConnection as any).off(eventName);
+      try {
+        (this.hubConnection as any).off(eventName);
+      } catch {
+        // noop
+      }
     }
     this.eventHandlers.delete(eventName);
   }
 
-  /**
-   * Se desuscribe de todos los eventos
-   */
   offAll(): void {
     if (this.hubConnection) {
-      this.hubConnection.offAll();
+      try {
+        (this.hubConnection as any).offAll?.();
+      } catch {
+        this.eventHandlers.forEach((_, eventName) => {
+          try { (this.hubConnection as any).off(eventName); } catch {}
+        });
+      }
     }
     this.eventHandlers.clear();
   }
 
-  /**
-   * Obtiene el estado actual de la conexión
-   */
   getState(): ConnectionState {
     return this.connectionState;
   }
 
-  /**
-   * Emite un evento a todos los listeners registrados
-   * (uso interno)
-   */
   private emitEvent(eventName: string, ...args: any[]): void {
     const handlers = this.eventHandlers.get(eventName);
     if (handlers) {
@@ -168,7 +180,7 @@ export class SignalRAjedrezDataSource {
         try {
           handler(...args);
         } catch (error) {
-          console.error(`Error en handler de ${eventName}:`, error);
+          console.error(`[SignalR DS] Error en handler de ${eventName}:`, error);
         }
       });
     }

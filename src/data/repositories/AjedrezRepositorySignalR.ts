@@ -1,5 +1,6 @@
 /**
- * Implementación del repositorio de ajedrez con SignalR
+ * src/data/repositories/AjedrezRepositorySignalR.ts
+ * Repositorio SignalR corregido y con trazas para depuración
  */
 
 import { IAjedrezRepository } from '../../domain/repositories/IAjedrezRepository';
@@ -25,13 +26,17 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
   }
 
   async connect(url: string, jugadorNombre: string): Promise<void> {
+    console.log('[TRACE repo] connect -> iniciando conexión a', url, 'con nombre', jugadorNombre);
     await this.dataSource.start(url, jugadorNombre);
     this.currentState = 'Connected';
+    console.log('[TRACE repo] connect -> estado Connected');
   }
 
   async disconnect(): Promise<void> {
+    console.log('[TRACE repo] disconnect -> deteniendo dataSource');
     await this.dataSource.stop();
     this.currentState = 'Disconnected';
+    console.log('[TRACE repo] disconnect -> estado Disconnected');
   }
 
   getConnectionState(): ConnectionState {
@@ -42,8 +47,15 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
     await this.dataSource.invoke('CrearSala', nombreSala);
   }
 
-  async unirseSala(nombreSala: string): Promise<void> {
-    await this.dataSource.invoke('UnirseSala', nombreSala);
+  async unirseSala(nombreSala: string, nombreJugador: string): Promise<void> {
+    try {
+      console.log('[TRACE repo] Invocando UnirseSala ->', { nombreSala, nombreJugador });
+      await this.dataSource.invoke('UnirseSala', nombreSala, nombreJugador);
+      console.log('[TRACE repo] UnirseSala invocado correctamente');
+    } catch (err) {
+      console.error('[ERROR repo] Error invocando UnirseSala:', err);
+      throw err;
+    }
   }
 
   async abandonarSala(): Promise<void> {
@@ -88,98 +100,114 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
 
   onSalaCreada(callback: (sala: Sala) => void): void {
     this.dataSource.on('SalaCreada', (dto: any) => {
+      console.log('[TRACE repo] onSalaCreada recibido en repo:', dto);
       try {
         const sala = SalaDomainMapper.toDomain(dto);
+        console.log('[TRACE repo] Sala mapeada en repo:', { id: sala.id, nombre: sala.nombre });
         callback(sala);
       } catch (error) {
-        console.error('Error mapeando SalaCreada:', error);
+        console.error('[ERROR repo] Error mapeando SalaCreada:', error, 'DTO crudo:', dto);
       }
     });
   }
 
   onJugadorUnido(callback: (partida: Partida) => void): void {
     this.dataSource.on('JugadorUnido', (dto: any) => {
+      console.log('[TRACE repo] onJugadorUnido recibido en repo:', dto);
       try {
         const partida = PartidaDomainMapper.toDomain(dto);
+        console.log('[TRACE repo] JugadorUnido mapeado en repo:', { id: partida.id, salaId: partida.salaId });
         callback(partida);
       } catch (error) {
-        console.error('Error mapeando JugadorUnido:', error);
+        console.error('[ERROR repo] Error mapeando JugadorUnido:', error, 'DTO crudo:', dto);
       }
     });
   }
 
   onPartidaIniciada(callback: (partida: Partida) => void): void {
     this.dataSource.on('PartidaIniciada', (dto: any) => {
+      console.log('[TRACE repo] onPartidaIniciada recibido en repo:', dto);
       try {
         const partida = PartidaDomainMapper.toDomain(dto);
+        console.log('[TRACE repo] Partida mapeada en repo:', { id: partida.id, salaId: partida.salaId });
         callback(partida);
       } catch (error) {
-        console.error('Error mapeando PartidaIniciada:', error);
+        console.error('[ERROR repo] Error mapeando PartidaIniciada:', error, 'DTO crudo:', dto);
       }
     });
   }
 
   onMovimientoRealizado(callback: (movimiento: Movimiento, tablero: Tablero) => void): void {
     this.dataSource.on('MovimientoRealizado', (movDTO: any, tableroDTO: any) => {
+      console.log('[TRACE repo] MovimientoRealizado recibido en repo:', movDTO, tableroDTO);
       try {
         const movimiento = MovimientoDomainMapper.toDomain(movDTO);
         const tablero = TableroDomainMapper.toDomain(tableroDTO);
         callback(movimiento, tablero);
       } catch (error) {
-        console.error('Error mapeando MovimientoRealizado:', error);
+        console.error('[ERROR repo] Error mapeando MovimientoRealizado:', error, 'DTOs:', movDTO, tableroDTO);
       }
     });
   }
 
   onTurnoActualizado(callback: (turno: Color, numeroTurno: number) => void): void {
     this.dataSource.on('TurnoActualizado', (turno: Color, numeroTurno: number) => {
+      console.log('[TRACE repo] TurnoActualizado recibido en repo:', turno, numeroTurno);
       callback(turno, numeroTurno);
     });
   }
 
   onTablasActualizadas(callback: (blancas: boolean, negras: boolean) => void): void {
     this.dataSource.on('TablasActualizadas', (blancas: boolean, negras: boolean) => {
+      console.log('[TRACE repo] TablasActualizadas recibido en repo:', blancas, negras);
       callback(blancas, negras);
     });
   }
 
   onPartidaFinalizada(callback: (resultado: ResultadoPartida, tipo: TipoFinPartida, ganador?: string) => void): void {
     this.dataSource.on('PartidaFinalizada', (resultado: ResultadoPartida, tipo: TipoFinPartida, ganador?: string) => {
+      console.log('[TRACE repo] PartidaFinalizada recibido en repo:', resultado, tipo, ganador);
       callback(resultado, tipo, ganador);
     });
   }
 
   onJaqueActualizado(callback: (hayJaque: boolean) => void): void {
     this.dataSource.on('JaqueActualizado', (hayJaque: boolean) => {
+      console.log('[TRACE repo] JaqueActualizado recibido en repo:', hayJaque);
       callback(hayJaque);
     });
   }
 
   onPromocionRequerida(callback: () => void): void {
     this.dataSource.on('PromocionRequerida', () => {
+      console.log('[TRACE repo] PromocionRequerida recibido en repo');
       callback();
     });
   }
 
   onReinicioActualizado(callback: (blancas: boolean, negras: boolean) => void): void {
     this.dataSource.on('ReinicioActualizado', (blancas: boolean, negras: boolean) => {
+      console.log('[TRACE repo] ReinicioActualizado recibido en repo:', blancas, negras);
       callback(blancas, negras);
     });
   }
 
   onJugadorAbandonado(callback: (nombreJugador: string) => void): void {
     this.dataSource.on('JugadorAbandonado', (nombreJugador: string) => {
+      console.log('[TRACE repo] JugadorAbandonado recibido en repo:', nombreJugador);
       callback(nombreJugador);
     });
   }
 
   onError(callback: (error: string) => void): void {
     this.dataSource.on('Error', (error: string) => {
+      console.error('[TRACE repo] Error recibido en repo:', error);
       callback(error);
     });
   }
 
   offAllListeners(): void {
+    console.log('[TRACE repo] offAllListeners -> removiendo listeners en dataSource');
     this.dataSource.offAll();
   }
 }

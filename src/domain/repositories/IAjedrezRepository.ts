@@ -1,13 +1,9 @@
-/**
- * Interfaz del repositorio de ajedrez
- * Define el contrato para acceso a datos
- */
-
-import { Movimiento } from '../entities/Movimiento';
-import { Tablero } from '../entities/Tablero';
-import { Sala } from '../entities/Sala';
-import { Partida } from '../entities/Partida';
-import { Color, ConnectionState, ResultadoPartida, TipoFinPartida, TipoPieza, ID } from '../types';
+// src/domain/repositories/IAjedrezRepository.ts
+import { Movimiento } from '../../domain/entities/Movimiento';
+import { Tablero } from '../../domain/entities/Tablero';
+import { Sala } from '../../domain/entities/Sala';
+import { Partida } from '../../domain/entities/Partida';
+import { Color, ConnectionState, ResultadoPartida, TipoFinPartida, TipoPieza } from '../../core/types';
 
 export interface IAjedrezRepository {
   // Conexión
@@ -15,31 +11,25 @@ export interface IAjedrezRepository {
   disconnect(): Promise<void>;
   getConnectionState(): ConnectionState;
 
-  // Operaciones de sala
+  // Acciones de sala / partida
   crearSala(nombreSala: string): Promise<void>;
-  unirseSala(nombreSala: string): Promise<void>;
+  unirseSala(nombreSala: string, nombreJugador: string): Promise<void>;
   abandonarSala(): Promise<void>;
 
-  // Operaciones de movimiento
+  // Movimientos
   realizarMovimiento(movimiento: Movimiento): Promise<void>;
   confirmarMovimiento(): Promise<void>;
   deshacerMovimiento(): Promise<void>;
 
-  // Operaciones de tablas
+  // Tablas / Rendición / Promoción / Reinicio
   solicitarTablas(): Promise<void>;
   retirarTablas(): Promise<void>;
-
-  // Operaciones de rendición
   rendirse(): Promise<void>;
-
-  // Operaciones de promoción
   promocionarPeon(tipoPieza: TipoPieza): Promise<void>;
-
-  // Operaciones de reinicio
   solicitarReinicio(): Promise<void>;
   retirarReinicio(): Promise<void>;
 
-  // Listeners para eventos del servidor
+  // Listeners / eventos entrantes desde SignalR
   onSalaCreada(callback: (sala: Sala) => void): void;
   onJugadorUnido(callback: (partida: Partida) => void): void;
   onPartidaIniciada(callback: (partida: Partida) => void): void;
@@ -52,5 +42,7 @@ export interface IAjedrezRepository {
   onReinicioActualizado(callback: (blancas: boolean, negras: boolean) => void): void;
   onJugadorAbandonado(callback: (nombreJugador: string) => void): void;
   onError(callback: (error: string) => void): void;
+
+  // Quitar listeners
   offAllListeners(): void;
 }

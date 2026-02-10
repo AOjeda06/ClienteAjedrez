@@ -4,17 +4,18 @@
 
 import React from 'react';
 import { View, ScrollView, StyleSheet, Text } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import { useIdentificacion } from '../hooks/useViewModels';
 import { InputNombre, Boton } from '../components/AjedrezComponents';
 
-type RootStackParamList = {
-  Identificacion: undefined;
-  MenuPrincipal: { nombreJugador: string };
-};
-
-type Props = NativeStackScreenProps<RootStackParamList, 'Identificacion'>;
+// expo-router: usar router si está disponible (native). Fallback a window.location en web.
+let useRouter: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  useRouter = require('expo-router').useRouter;
+} catch {
+  useRouter = null;
+}
 
 const estilos = StyleSheet.create({
   container: {
@@ -36,68 +37,64 @@ const estilos = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
   },
-  iconos: {
-    fontSize: 64,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
 });
 
-export const IdentificacionScreen = observer(({ navigation }: Props) => {
-  const { state, actions } = useIdentificacion();
+const IdentificacionScreenInner: React.FC = () => {
+  const { state, actions, viewModel } = useIdentificacion();
+  const router = useRouter ? useRouter() : null;
 
   const handleContinuar = async () => {
-    if (actions.validarYContinuar()) {
-      actions.setLoading(true);
+    if (!actions.validarYContinuar()) return;
+    actions.setLoading(true);
 
-      setTimeout(() => {
-        navigation.navigate('MenuPrincipal', { nombreJugador: state.nombreJugador });
-        actions.setLoading(false);
-      }, 500);
+    const nombre = viewModel.nombreJugador.trim();
+    const path = `/menu-principal?nombreJugador=${encodeURIComponent(nombre)}`;
+
+    try {
+      if (router && typeof router.push === 'function') {
+        // preferimos router.push en native/SPA
+        router.push(path);
+      } else if (typeof window !== 'undefined') {
+        // forzamos recarga completa en web para asegurar que la ruta se cargue
+        window.location.assign(path);
+      } else {
+        console.warn('No hay router disponible para navegar.');
+      }
+    } finally {
+      setTimeout(() => actions.setLoading(false), 500);
     }
   };
 
-  return (
-    <ScrollView
-      contentContainerStyle={estilos.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View>
 
-        {/* ICONOS */}
+  return (
+    <ScrollView contentContainerStyle={estilos.container} keyboardShouldPersistTaps="handled">
+      <View>
         <View style={{ marginBottom: 40 }}>
-          <Text style={{ fontSize: 64, textAlign: 'center', marginBottom: 20 }}>
-            ♔ ♕ ♖ ♗ ♘ ♙
-          </Text>
+          <Text style={{ fontSize: 64, textAlign: 'center', marginBottom: 20 }}>♔ ♕ ♖ ♗ ♘ ♙</Text>
         </View>
 
-        {/* TITULO Y SUBTITULO */}
         <View style={{ marginBottom: 32 }}>
           <Text style={estilos.titulo}>⚔️ ClienteAjedrez</Text>
-          <Text style={estilos.subtitulo}>
-            Ingresa tu nombre para comenzar a jugar
-          </Text>
+          <Text style={estilos.subtitulo}>Ingresa tu nombre para comenzar a jugar</Text>
         </View>
 
-        {/* INPUT */}
         <InputNombre
-          value={state.nombreJugador}
+          value={viewModel.nombreJugador}
           onChangeText={actions.setNombre}
           placeholder="Tu nombre"
-          error={state.error || undefined}
-          isLoading={state.isLoading}
+          error={viewModel.error || undefined}
+          isLoading={viewModel.isLoading}
         />
 
-        {/* BOTÓN */}
         <Boton
           title="Continuar"
           onPress={handleContinuar}
-          loading={state.isLoading}
-          disabled={!state.nombreJugador.trim()}
+          loading={viewModel.isLoading}
+          disabled={!viewModel.nombreJugador.trim()}
         />
-
       </View>
     </ScrollView>
-
   );
-});
+};
+
+export default observer(IdentificacionScreenInner);

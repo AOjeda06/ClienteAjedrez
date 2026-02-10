@@ -1,6 +1,6 @@
 /**
- * Mappers de dominio
- * Convierte DTOs a entidades de dominio
+ * src/domain/mappers/DomainMappers.ts
+ * Mappers tolerantes: aceptan DTOs con PascalCase o camelCase y validan antes de mapear.
  */
 
 import { Jugador } from '../entities/Jugador';
@@ -12,7 +12,7 @@ import { Partida } from '../entities/Partida';
 
 export class JugadorDomainMapper {
   static toDomain(dto: any): Jugador {
-    return new Jugador(dto.id, dto.nombre, dto.color);
+    return Jugador.createFromDTO(dto);
   }
 }
 

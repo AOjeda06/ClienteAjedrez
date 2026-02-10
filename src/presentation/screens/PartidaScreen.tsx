@@ -1,11 +1,13 @@
 /**
- * Pantalla de Partida
+ * src/presentation/screens/PartidaScreen.tsx
+ * Pantalla de Partida — versión robusta que evita leer params indefinidos
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, ScrollView, StyleSheet, Alert, Modal, Text } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { View, StyleSheet, Alert, Text } from 'react-native';
 import { observer } from 'mobx-react-lite';
+import { useLocalSearchParams } from 'expo-router';
+
 import { usePartida } from '../hooks/useViewModels';
 import {
   TableroComponent,
@@ -17,12 +19,9 @@ import {
   Boton,
 } from '../components/AjedrezComponents';
 
-type RootStackParamList = {
-  Partida: { nombreJugador: string };
-  MenuPrincipal: { nombreJugador: string };
-};
-
-type Props = NativeStackScreenProps<RootStackParamList, 'Partida'>;
+// Si en tu proyecto usas NativeStackScreenProps en mobile, puedes mantener la firma
+// pero aquí la pantalla es compatible con ambos entornos (expo-router / navigation).
+// Por simplicidad no importamos NativeStackScreenProps para evitar errores en web.
 
 const estilos = StyleSheet.create({
   container: {
@@ -92,10 +91,15 @@ const mensajeResultado = (resultado: string): string => {
   }
 };
 
-export const PartidaScreen = observer(({ route, navigation }: Props) => {
+export const PartidaScreen = observer((props: any) => {
   const { state, actions } = usePartida();
   const mounted = useRef(true);
-  const { nombreJugador } = route.params;
+
+  // Leer params de forma segura: primero intentar props.route?.params (mobile),
+  // luego useLocalSearchParams (expo-router/web).
+  const localParams = useLocalSearchParams<{ nombreJugador?: string; salaId?: string }>();
+  const nombreJugadorFromRoute = props?.route?.params?.nombreJugador;
+  const nombreJugador = nombreJugadorFromRoute ?? (localParams?.nombreJugador ? String(localParams.nombreJugador) : undefined) ?? state?.partida?.jugadorBlancas?.nombre ?? '';
 
   useEffect(() => {
     return () => {
@@ -103,40 +107,60 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
     };
   }, []);
 
+  // Mostrar alert de fin de partida cuando corresponda (defensivo: comprobar existencia)
   useEffect(() => {
     if (state.mostrarFinPartida && state.partida) {
       Alert.alert(
-        mensajeResultado(state.partida.resultado as string),
-        `Tipo: ${mensajeFinPartida(state.partida.tipoFin || '')}`,
+        mensajeResultado(String(state.partida.resultado ?? '')),
+        `Tipo: ${mensajeFinPartida(String(state.partida.tipoFin ?? ''))}`,
         [
           {
             text: 'Volver al Menú',
             onPress: () => {
-              actions.volverAlMenu();
-              navigation.navigate('MenuPrincipal', { nombreJugador });
+              try {
+                actions.volverAlMenu();
+              } catch (err) {
+                console.error('Error en volverAlMenu:', err);
+              }
+              // Si navigation está disponible en props, usarla; si no, no fallar.
+              try {
+                props?.navigation?.navigate?.('MenuPrincipal', { nombreJugador });
+              } catch (err) {
+                // noop
+              }
             },
           },
         ]
       );
     }
-  }, [state.mostrarFinPartida]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.mostrarFinPartida, state.partida]);
 
+  // Alert para tablas ofrecidas
   useEffect(() => {
     if (state.tablasOfrecidas) {
       Alert.alert(
         'Tablas Ofrecidas',
-        `${state.nombreOponente} ofrece tablas`,
+        `${state.nombreOponente || 'El oponente'} ofrece tablas`,
         [
           {
             text: 'Aceptar',
             onPress: () => {
-              actions.solicitarTablas();
+              try {
+                actions.solicitarTablas();
+              } catch (err) {
+                console.error('Error aceptando tablas:', err);
+              }
             },
           },
           {
             text: 'Rechazar',
             onPress: () => {
-              actions.retirarTablas();
+              try {
+                actions.retirarTablas();
+              } catch (err) {
+                console.error('Error rechazando tablas:', err);
+              }
             },
           },
         ]
@@ -144,6 +168,8 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
     }
   }, [state.tablasOfrecidas]);
 
+  // Si no hay partida aún, mostrar pantalla de carga / espera.
+  // No intentamos inicializar la partida aquí con datos inexistentes.
   if (!state.partida || !state.tablero || !state.miColor) {
     return (
       <View style={estilos.container}>
@@ -154,6 +180,7 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
     );
   }
 
+  // Render principal cuando la partida ya está en el estado del VM
   return (
     <View style={estilos.container}>
       {/* Información de partida y oponente */}
@@ -165,7 +192,7 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
         mensajeJaque={state.mensajeJaque}
       />
 
-      {/* Contador de piezas eliminadas (oponente) */}
+      {/* Contadores de piezas */}
       {state.miColor === 'Blanca' && (
         <View style={estilos.seccionContadores}>
           <View style={estilos.contador}>
@@ -189,12 +216,18 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
           tablero={state.tablero}
           piezaSeleccionada={state.piezaSeleccionada}
           movimientosPosibles={state.movimientosPosibles}
-          onCasillaPress={actions.seleccionarCasilla}
+          onCasillaPress={(pos) => {
+            try {
+              actions.seleccionarCasilla(pos);
+            } catch (err) {
+              console.error('Error al seleccionar casilla:', err);
+            }
+          }}
           miColor={state.miColor}
         />
       </View>
 
-      {/* Contador de piezas eliminadas (propia) */}
+      {/* Contadores opuestos */}
       {state.miColor === 'Blanca' && (
         <View style={estilos.seccionContadores}>
           <View style={estilos.contador}>
@@ -227,7 +260,7 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
         onRendirse={() => {
           Alert.alert('¿Estás seguro?', 'Una vez que te rindas, perderás la partida.', [
             { text: 'Cancelar', style: 'cancel' },
-            { text: 'Rendirse', onPress: actions.rendirse, style: 'destructive' },
+            { text: 'Rendirse', onPress: () => actions.rendirse(), style: 'destructive' },
           ]);
         }}
         tablasOfrecidas={state.tablasOfrecidas}
@@ -238,19 +271,31 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
       <ModalPromocion
         visible={state.mostrarPromocion}
         onPromocion={async (tipo) => {
-          await actions.promocionarPeon(tipo);
-          await actions.confirmarMovimiento();
+          try {
+            await actions.promocionarPeon(tipo);
+            await actions.confirmarMovimiento();
+          } catch (err) {
+            console.error('Error en promocion:', err);
+          }
         }}
       />
 
       {/* Modal de fin de partida */}
       <ModalFinPartida
         visible={state.mostrarFinPartida}
-        resultado={mensajeResultado(state.partida.resultado as string)}
-        tipo={mensajeFinPartida(state.partida.tipoFin || '')}
+        resultado={mensajeResultado(String(state.partida.resultado ?? ''))}
+        tipo={mensajeFinPartida(String(state.partida.tipoFin ?? ''))}
         onVolverAlMenu={() => {
-          actions.volverAlMenu();
-          navigation.navigate('MenuPrincipal', { nombreJugador });
+          try {
+            actions.volverAlMenu();
+          } catch (err) {
+            console.error('Error volviendo al menu:', err);
+          }
+          try {
+            props?.navigation?.navigate?.('MenuPrincipal', { nombreJugador });
+          } catch (err) {
+            // noop
+          }
         }}
       />
 
@@ -258,10 +303,18 @@ export const PartidaScreen = observer(({ route, navigation }: Props) => {
       <View style={estilos.pie}>
         <Boton
           title="Deshacer Último Movimiento"
-          onPress={actions.deshacerMovimiento}
+          onPress={() => {
+            try {
+              actions.deshacerMovimiento();
+            } catch (err) {
+              console.error('Error deshaciendo movimiento:', err);
+            }
+          }}
           style={{ backgroundColor: '#FF9800' }}
         />
       </View>
     </View>
   );
 });
+
+export default PartidaScreen;

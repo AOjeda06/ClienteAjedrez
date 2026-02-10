@@ -296,38 +296,59 @@ export class Partida {
 
   /**
    * Crea una instancia desde un DTO
+   * Acepta tanto camelCase como PascalCase en las propiedades entrantes.
    */
   static createFromDTO(dto: any): Partida {
-    if (!dto.id || !dto.salaId) {
+    if (!dto) {
       throw new Error('DTO incompleto para crear Partida');
     }
 
-    const tablero = Tablero.createFromDTO(dto.tablero || {});
+    // Aceptar PascalCase o camelCase
+    const id = dto.id ?? dto.Id ?? null;
+    const salaId = dto.salaId ?? dto.SalaId ?? null;
 
-    const jugadorBlancas = dto.jugadorBlancas instanceof Jugador
-      ? dto.jugadorBlancas
-      : new Jugador(dto.jugadorBlancas?.id, dto.jugadorBlancas?.nombre, dto.jugadorBlancas?.color);
+    // Tablero y jugadores pueden venir en PascalCase o camelCase
+    const tableroDto = dto.tablero ?? dto.Tablero ?? null;
+    const jugadorBlancasDto = dto.jugadorBlancas ?? dto.JugadorBlancas ?? null;
+    const jugadorNegrasDto = dto.jugadorNegras ?? dto.JugadorNegras ?? null;
 
-    const jugadorNegras = dto.jugadorNegras instanceof Jugador
-      ? dto.jugadorNegras
-      : new Jugador(dto.jugadorNegras?.id, dto.jugadorNegras?.nombre, dto.jugadorNegras?.color);
+    // Campos opcionales con nombres alternativos
+    const turnoActual = dto.turnoActual ?? dto.TurnoActual ?? dto.turno ?? dto.Turno ?? 'Blanca';
+    const numeroTurnos = dto.numeroTurnos ?? dto.NumeroTurnos ?? dto.numeroTurnos ?? dto.numeroTurno ?? 0;
+    const tiempoTranscurrido = dto.tiempoTranscurrido ?? dto.TiempoTranscurrido ?? 0;
+    const estado = dto.estado ?? dto.Estado ?? 'Esperando';
+    const resultado = dto.resultado ?? dto.Resultado ?? null;
+    const tipoFin = dto.tipoFin ?? dto.TipoFin ?? null;
+    const tablasBlancas = dto.tablasBlancas ?? dto.TablasBlancas ?? false;
+    const tablasNegras = dto.tablasNegras ?? dto.TablasNegras ?? false;
+    const hayJaque = dto.hayJaque ?? dto.HayJaque ?? false;
+    const hayJaqueMate = dto.hayJaqueMate ?? dto.HayJaqueMate ?? false;
+
+    if (!id || !salaId || !tableroDto || !jugadorBlancasDto || !jugadorNegrasDto) {
+      throw new Error('DTO incompleto para crear Partida');
+    }
+
+    // Mapear subobjetos usando sus helpers
+    const tablero = tableroDto instanceof Tablero ? tableroDto : Tablero.createFromDTO(tableroDto);
+    const jugadorBlancas = jugadorBlancasDto instanceof Jugador ? jugadorBlancasDto : Jugador.createFromDTO(jugadorBlancasDto);
+    const jugadorNegras = jugadorNegrasDto instanceof Jugador ? jugadorNegrasDto : Jugador.createFromDTO(jugadorNegrasDto);
 
     return new Partida({
-      id: dto.id,
-      salaId: dto.salaId,
+      id: String(id),
+      salaId: String(salaId),
       tablero,
       jugadorBlancas,
       jugadorNegras,
-      turnoActual: dto.turnoActual,
-      numeroTurnos: dto.numeroTurnos,
-      tiempoTranscurrido: dto.tiempoTranscurrido,
-      estado: dto.estado,
-      resultado: dto.resultado,
-      tipoFin: dto.tipoFin,
-      tablasBlancas: dto.tablasBlancas,
-      tablasNegras: dto.tablasNegras,
-      hayJaque: dto.hayJaque,
-      hayJaqueMate: dto.hayJaqueMate,
+      turnoActual: turnoActual as Color,
+      numeroTurnos: Number(numeroTurnos ?? 0),
+      tiempoTranscurrido: Number(tiempoTranscurrido ?? 0),
+      estado: estado as EstadoPartida,
+      resultado: resultado as ResultadoPartida,
+      tipoFin: tipoFin as TipoFinPartida | null,
+      tablasBlancas: Boolean(tablasBlancas),
+      tablasNegras: Boolean(tablasNegras),
+      hayJaque: Boolean(hayJaque),
+      hayJaqueMate: Boolean(hayJaqueMate),
     });
   }
 }

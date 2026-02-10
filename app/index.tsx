@@ -1,11 +1,8 @@
-/**
- * Punto de entrada de la aplicación
- */
-
+// app/index.tsx
+import '../src/core/registrations'; // registrar singletons antes de renderizar
 import React from 'react';
 import { Redirect } from 'expo-router';
 
 export default function Index() {
-  // Redirige a la pantalla de identificación
   return <Redirect href="/identificacion" />;
 }

@@ -1,21 +1,28 @@
 /**
- * Pantalla del Menú Principal
+ * src/presentation/screens/MenuPrincipalScreen.tsx
+ * Componente observer que usa el viewModel directamente
  */
 
 import React, { useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Alert, ActivityIndicator, Text } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
 import { useMenuPrincipal } from '../hooks/useViewModels';
-import { InputNombre, InputNombre as InputSala, Boton } from '../components/AjedrezComponents';
+import { InputNombre, Boton } from '../components/AjedrezComponents';
 
-type RootStackParamList = {
-  Identificacion: undefined;
-  MenuPrincipal: { nombreJugador: string };
-  Partida: { nombreJugador: string };
-};
-
-type Props = NativeStackScreenProps<RootStackParamList, 'MenuPrincipal'>;
+const HUB_URL: string = (() => {
+  const url = process.env.EXPO_PUBLIC_HUB_URL;
+  if (!url) {
+    console.error(
+      '[Config] EXPO_PUBLIC_HUB_URL no está definida. ' +
+      'Añade EXPO_PUBLIC_HUB_URL=https://localhost:7040/ajedrezHub en tu .env ' +
+      'y reinicia el servidor de desarrollo.'
+    );
+    return 'https://localhost:7040/ajedrezHub';
+  }
+  return url;
+})();
 
 const estilos = StyleSheet.create({
   container: {
@@ -70,79 +77,84 @@ const estilos = StyleSheet.create({
   },
 });
 
-const HUB_URL = 'http://localhost:5000/ajedrezHub'; // Cambiar según tu servidor
+export const MenuPrincipalScreen: React.FC = observer(() => {
+  const { viewModel, actions } = useMenuPrincipal();
 
-export const MenuPrincipalScreen = observer(({ route, navigation }: Props) => {
-  const { state, actions } = useMenuPrincipal();
+  const params = useLocalSearchParams<{ nombreJugador?: string }>();
+  const router = useRouter();
+
+  const nombreJugador =
+    (params.nombreJugador ? String(params.nombreJugador) : null) ||
+    viewModel.nombreJugador ||
+    '';
 
   useEffect(() => {
-    // Inicializar con el nombre del jugador
-    const { nombreJugador } = route.params;
-    actions.setNombreJugador(nombreJugador);
-    
-    // Conectar automáticamente
-    actions.conectar(HUB_URL);
+    if (!nombreJugador.trim()) {
+      console.warn('MenuPrincipal: no hay nombre de jugador.');
+      return;
+    }
+
+    if (viewModel.nombreJugador !== nombreJugador) {
+      actions.setNombreJugador(nombreJugador);
+    }
+
+    actions.conectar(HUB_URL).catch(err => {
+      console.error('Error al conectar desde MenuPrincipal:', err);
+    });
 
     return () => {
-      // Limpiar al desmontar
-      actions.desconectar();
+      actions.desconectar().catch(e => console.error('Error al desconectar:', e));
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nombreJugador]);
 
-  // Observar si la partida fue creada
   useEffect(() => {
-    if (state.partida) {
-      // Navegar a la pantalla de partida
-      navigation.navigate('Partida', { nombreJugador: state.nombreJugador });
+    if (viewModel.partida) {
+      router.push({
+        pathname: '/partida',
+        params: { nombreJugador },
+      });
     }
-  }, [state.partida]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewModel.partida]);
 
-  // Observar cambios en esperandoOponente
   useEffect(() => {
-    if (state.esperandoOponente) {
-      Alert.alert(
-        'Sala Creada',
-        `Esperando al oponente en la sala: ${state.nombreSala}`
-      );
+    if (viewModel.esperandoOponente) {
+      Alert.alert('Sala Creada', `Esperando al oponente en la sala: ${viewModel.nombreSalaCrear || viewModel.nombreSala}`);
     }
-  }, [state.esperandoOponente]);
+  }, [viewModel.esperandoOponente, viewModel.nombreSalaCrear, viewModel.nombreSala]);
 
   const getEstadoConexionStyle = () => {
-    switch (state.connectionState) {
-      case 'Connected':
-        return estilos.conectado;
+    switch (viewModel.connectionState) {
+      case 'Connected':    return estilos.conectado;
       case 'Connecting':
-      case 'Reconnecting':
-        return estilos.conectando;
-      default:
-        return estilos.desconectado;
+      case 'Reconnecting': return estilos.conectando;
+      default:             return estilos.desconectado;
     }
   };
 
+  const isConnected = viewModel.connectionState === 'Connected';
+
   return (
     <ScrollView contentContainerStyle={estilos.container}>
-      {/* Encabezado */}
       <View style={estilos.card}>
         <Text style={estilos.titulo}>Menú Principal</Text>
         <Text style={{ fontSize: 14, color: '#666' }}>
-          Bienvenido, {state.nombreJugador}
+          Bienvenido, {nombreJugador || '—'}
         </Text>
       </View>
 
-      {/* Estado de conexión */}
       <Text style={[estilos.estadoConexion, getEstadoConexionStyle()]}>
-        {state.connectionState === 'Connected'
+        {viewModel.connectionState === 'Connected'
           ? '🟢 Conectado'
-          : state.connectionState === 'Connecting' || state.connectionState === 'Reconnecting'
+          : viewModel.connectionState === 'Connecting' || viewModel.connectionState === 'Reconnecting'
           ? '🟡 Conectando...'
           : '🔴 Desconectado'}
       </Text>
 
-      {/* Mensaje de error */}
-      {state.error && <Text style={estilos.error}>{state.error}</Text>}
+      {viewModel.error && <Text style={estilos.error}>{viewModel.error}</Text>}
 
-      {/* Esperar oponente */}
-      {state.esperandoOponente && (
+      {viewModel.esperandoOponente && (
         <View style={[estilos.card, { backgroundColor: '#E3F2FD', borderColor: '#2196F3' }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <ActivityIndicator color="#2196F3" />
@@ -153,47 +165,67 @@ export const MenuPrincipalScreen = observer(({ route, navigation }: Props) => {
         </View>
       )}
 
-      {/* Crear Sala */}
+      {/* Crear sala */}
       <Text style={estilos.subtitulo}>Crear Nueva Sala</Text>
       <View style={estilos.card}>
-        <InputSala
-          value={state.nombreSala}
-          onChangeText={actions.setNombreSala}
+        <InputNombre
+          value={viewModel.nombreSalaCrear}
+          onChangeText={(t) => actions.setNombreSalaCrear(t)}
           placeholder="Nombre de la sala"
-          isLoading={state.isLoading}
+          isLoading={viewModel.isLoading}
         />
         <Boton
           title="Crear Sala"
-          onPress={actions.crearSala}
-          loading={state.isLoading}
-          disabled={!state.nombreSala.trim() || state.connectionState !== 'Connected'}
+          onPress={async () => {
+            try {
+              await actions.crearSala();
+            } catch (err: any) {
+              Alert.alert('Error', err?.message ?? 'No se pudo crear la sala');
+            }
+          }}
+          loading={viewModel.isLoading}
+          disabled={!viewModel.nombreSalaCrear.trim() || !isConnected}
         />
       </View>
 
-      {/* Unirse a Sala */}
+      {/* Unirse a sala */}
       <Text style={estilos.subtitulo}>Unirse a Sala Existente</Text>
       <View style={estilos.card}>
-        <InputSala
-          value={state.nombreSala}
-          onChangeText={actions.setNombreSala}
+        <InputNombre
+          value={viewModel.nombreSalaUnirse}
+          onChangeText={(t) => actions.setNombreSalaUnirse(t)}
           placeholder="Nombre de la sala"
-          isLoading={state.isLoading}
+          isLoading={viewModel.isLoading}
         />
         <Boton
           title="Unirse a Sala"
-          onPress={actions.unirseSala}
-          loading={state.isLoading}
-          disabled={!state.nombreSala.trim() || state.connectionState !== 'Connected'}
+          onPress={async () => {
+            try {
+              await actions.unirseSala();
+            } catch (err: any) {
+              Alert.alert('Error', err?.message ?? 'No se pudo unir a la sala');
+            }
+          }}
+          loading={viewModel.isLoading}
+          disabled={!viewModel.nombreSalaUnirse.trim() || !isConnected}
         />
       </View>
 
-      {/* Botón desconectar */}
+      {/* Desconectar */}
       <Boton
         title="Desconectar"
-        onPress={actions.desconectar}
-        loading={state.isLoading}
+        onPress={async () => {
+          try {
+            await actions.desconectar();
+          } catch (err: any) {
+            console.error('Error al desconectar:', err);
+          }
+        }}
+        loading={viewModel.isLoading}
         style={{ backgroundColor: '#F44336', marginTop: 24 }}
       />
     </ScrollView>
   );
 });
+
+export default MenuPrincipalScreen;

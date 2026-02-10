@@ -1,8 +1,4 @@
-/**
- * Interfaz de casos de uso de ajedrez
- * Define el contrato de operaciones de negocio
- */
-
+// src/domain/interfaces/IAjedrezUseCase.ts
 import { Movimiento } from '../entities/Movimiento';
 import { Tablero } from '../entities/Tablero';
 import { Sala } from '../entities/Sala';
@@ -10,13 +6,11 @@ import { Partida } from '../entities/Partida';
 import { Color, ResultadoPartida, TipoFinPartida, TipoPieza } from '../types';
 
 export interface IAjedrezUseCase {
-  // Conexión
+  // Conexión y salas
   conectarJugador(url: string, nombre: string): Promise<void>;
   desconectarJugador(): Promise<void>;
-
-  // Salas
   crearNuevaSala(nombreSala: string): Promise<void>;
-  unirseASala(nombreSala: string): Promise<void>;
+  unirseASala(nombreSala: string, nombreJugador: string): Promise<void>;
   salirDeSala(): Promise<void>;
 
   // Movimientos
@@ -24,21 +18,15 @@ export interface IAjedrezUseCase {
   confirmarJugada(): Promise<void>;
   deshacerJugada(): Promise<void>;
 
-  // Tablas
+  // Tablas / Rendición / Promoción / Reinicio
   pedirTablas(): Promise<void>;
   cancelarTablas(): Promise<void>;
-
-  // Rendición
   rendirsePartida(): Promise<void>;
-
-  // Promoción
   seleccionarPromocion(tipo: TipoPieza): Promise<void>;
-
-  // Reinicio
   pedirReinicio(): Promise<void>;
   cancelarReinicio(): Promise<void>;
 
-  // Suscriptores de eventos
+  // Suscripciones (UI)
   subscribeSalaCreada(callback: (sala: Sala) => void): void;
   subscribeJugadorUnido(callback: (partida: Partida) => void): void;
   subscribePartidaIniciada(callback: (partida: Partida) => void): void;
@@ -51,5 +39,7 @@ export interface IAjedrezUseCase {
   subscribeReinicio(callback: (blancas: boolean, negras: boolean) => void): void;
   subscribeAbandono(callback: (nombreJugador: string) => void): void;
   subscribeError(callback: (error: string) => void): void;
+
+  // Unsubscribe / cleanup
   unsubscribeAll(): void;
 }

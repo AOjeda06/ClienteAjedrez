@@ -67,34 +67,50 @@ export class Sala {
 
   /**
    * Crea una instancia desde un DTO
+   * Acepta DTOs con camelCase o PascalCase y usa Jugador.createFromDTO para robustez.
    */
   static createFromDTO(dto: {
     id?: ID;
+    Id?: ID;
     nombre?: string;
+    Nombre?: string;
     creador?: any;
+    Creador?: any;
     oponente?: any | null;
+    Oponente?: any | null;
     estado?: EstadoPartida;
+    Estado?: EstadoPartida;
   }): Sala {
-    if (!dto.id || !dto.nombre || !dto.creador) {
+    if (!dto) {
       throw new Error('DTO incompleto para crear Sala');
     }
 
-    const creador = dto.creador instanceof Jugador
-      ? dto.creador
-      : new Jugador(dto.creador.id, dto.creador.nombre, dto.creador.color);
+    // Aceptar tanto PascalCase como camelCase
+    const id = dto.id ?? dto.Id ?? null;
+    const nombre = dto.nombre ?? dto.Nombre ?? null;
+    const estado = dto.estado ?? dto.Estado ?? null;
+    const creadorDto = dto.creador ?? dto.Creador ?? null;
+    const oponenteDto = dto.oponente ?? dto.Oponente ?? null;
 
-    const oponente = dto.oponente
-      ? dto.oponente instanceof Jugador
-        ? dto.oponente
-        : new Jugador(dto.oponente.id, dto.oponente.nombre, dto.oponente.color)
+    if (!id || !nombre || !creadorDto) {
+      throw new Error('DTO incompleto para crear Sala');
+    }
+
+    // Usar Jugador.createFromDTO para robustez y consistencia
+    const creador = creadorDto instanceof Jugador
+      ? creadorDto
+      : Jugador.createFromDTO(creadorDto);
+
+    const oponente = oponenteDto
+      ? (oponenteDto instanceof Jugador ? oponenteDto : Jugador.createFromDTO(oponenteDto))
       : null;
 
     return new Sala({
-      id: dto.id,
-      nombre: dto.nombre,
+      id: String(id),
+      nombre: String(nombre),
       creador,
       oponente,
-      estado: dto.estado,
+      estado: (estado as EstadoPartida) ?? 'Esperando',
     });
   }
 }
