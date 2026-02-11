@@ -83,7 +83,14 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
   }
 
   async rendirse(): Promise<void> {
-    await this.dataSource.invoke('Rendirse');
+    console.log('[TRACE repo] rendirse() - invocando Rendirse en el servidor');
+    try {
+      await this.dataSource.invoke('Rendirse');
+      console.log('[TRACE repo] rendirse() - Rendirse invocado exitosamente');
+    } catch (error) {
+      console.error('[ERROR repo] rendirse() - Error al invocar Rendirse:', error);
+      throw error;
+    }
   }
 
   async promocionarPeon(tipoPieza: TipoPieza): Promise<void> {
@@ -186,7 +193,8 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
       // ResultadoPartida: 0 = Empate, 1 = VictoriaBlancas, 2 = VictoriaNegras
       let resultado: ResultadoPartida;
       if (typeof resultadoRaw === 'number') {
-        resultado = resultadoRaw === 0 ? 'Empate' : resultadoRaw === 1 ? 'Victoria' : 'Derrota';
+        const resultados: ResultadoPartida[] = ['Empate', 'VictoriaBlancas', 'VictoriaNegras'];
+        resultado = resultados[resultadoRaw] ?? 'Empate';
       } else {
         resultado = resultadoRaw as ResultadoPartida;
       }

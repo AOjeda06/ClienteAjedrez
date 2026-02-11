@@ -3,7 +3,7 @@
  * Gestiona toda la lógica de juego
  */
 
-import { makeAutoObservable, runInAction } from 'mobx';
+import { makeAutoObservable, runInAction, observable } from 'mobx';
 import { Color, Posicion, posicionesIguales, ResultadoPartida, TipoFinPartida, TipoPieza } from '../../core/types';
 import { Movimiento } from '../../domain/entities/Movimiento';
 import { Partida } from '../../domain/entities/Partida';
@@ -24,8 +24,8 @@ export class PartidaVM {
   mostrarFinPartida: boolean = false;
   mensajeTurno: string | null = null;
   mensajeJaque: string | null = null;
-  piezasEliminadasBlancas: Map<TipoPieza, number> = new Map();
-  piezasEliminadasNegras: Map<TipoPieza, number> = new Map();
+  piezasEliminadasBlancas = observable.map<TipoPieza, number>();
+  piezasEliminadasNegras = observable.map<TipoPieza, number>();
   error: string | null = null;
   tablasOfrecidas: boolean = false;
   solicitadasTablas: boolean = false;
@@ -65,6 +65,7 @@ export class PartidaVM {
 
     // Suscribirse a eventos
     this.ajedrezUseCase.subscribeMovimiento(this.handleMovimiento.bind(this));
+    this.ajedrezUseCase.subscribeTableroActualizado(this.handleTableroActualizado.bind(this));
     this.ajedrezUseCase.subscribeTurno(this.handleTurnoActualizado.bind(this));
     this.ajedrezUseCase.subscribeJaque(this.handleJaqueActualizado.bind(this));
     this.ajedrezUseCase.subscribeFinPartida(this.handlePartidaFinalizada.bind(this));
@@ -170,6 +171,19 @@ export class PartidaVM {
 
     // Crear movimiento
     const piezaCapturada = this.tablero.obtenerPieza(destino);
+
+    // Detectar si es promoción
+    const esPromocion = pieza.tipo === 'Peon' &&
+                       ((pieza.color === 'Blanca' && destino.fila === 0) ||
+                        (pieza.color === 'Negra' && destino.fila === 7));
+
+    console.log('[TRACE PartidaVM] Detección de promoción:', {
+      esPeon: pieza.tipo === 'Peon',
+      colorPieza: pieza.color,
+      destinoFila: destino.fila,
+      esPromocion
+    });
+
     const movimiento = new Movimiento({
       id: `mov-${Date.now()}`,
       piezaId: pieza.id,
@@ -177,9 +191,7 @@ export class PartidaVM {
       destino,
       piezaCapturada: piezaCapturada?.id || null,
       esEnroque: this.proximoMovimientoEsEnroque,
-      esPromocion: pieza.tipo === 'Peon' &&
-                   ((pieza.color === 'Blanca' && destino.fila === 0) ||
-                    (pieza.color === 'Negra' && destino.fila === 7)),
+      esPromocion,
     });
     console.log('[TRACE PartidaVM] movimiento created:', movimiento);
 
@@ -222,14 +234,22 @@ export class PartidaVM {
       }
 
       console.log('[TRACE PartidaVM] Confirmando movimiento en el servidor...');
+
+      // Check if the pending movement is a promotion
+      const esPromocion = this.movimientoPendiente.esPromocion;
+
       // Llamar a confirmarJugada() que mapea a ConfirmarMovimiento del backend
       await this.ajedrezUseCase.confirmarJugada();
       console.log('[TRACE PartidaVM] Movimiento confirmado en el backend');
 
-      // El backend enviará TurnoActualizado, que el handler actualizará
+      // El backend enviará TurnoActualizado y PromocionRequerida (si aplica)
       runInAction(() => {
-        this.movimientoPendiente = null;
-        this.mostrarPromocion = false;
+        // Don't clear movimientoPendiente or mostrarPromocion if it's a promotion
+        // They will be cleared after the promotion is completed
+        if (!esPromocion) {
+          this.movimientoPendiente = null;
+          this.mostrarPromocion = false;
+        }
         this.error = null;
       });
     } catch (error: any) {
@@ -326,15 +346,17 @@ export class PartidaVM {
    * Se rinde de la partida
    */
   async rendirse(): Promise<void> {
+    console.log('[PartidaVM] rendirse() invoked - starting');
     try {
+      console.log('[PartidaVM] Calling ajedrezUseCase.rendirsePartida()');
       await this.ajedrezUseCase.rendirsePartida();
       runInAction(() => { this.error = null; });
-      console.log('[PartidaVM] rendirse invoked');
+      console.log('[PartidaVM] rendirse completed successfully');
     } catch (error: any) {
+      console.error('[PartidaVM] Error en rendirse:', error);
       runInAction(() => {
-        this.error = error?.message ?? String(error);
+        this.error = `Error al rendirse: ${error?.message ?? String(error)}`;
       });
-      console.error('Error rindiendo:', error);
     }
   }
 
@@ -352,11 +374,11 @@ export class PartidaVM {
 
       runInAction(() => {
         this.mostrarPromocion = false;
+        this.movimientoPendiente = null;
         this.error = null;
       });
 
-      // NO limpiar movimientoPendiente aquí - se limpiará en confirmarMovimiento()
-      console.log('[PartidaVM] Promoción enviada, movimiento sigue pendiente de confirmación');
+      console.log('[PartidaVM] Promoción completada y movimiento limpiado');
     } catch (error: any) {
       runInAction(() => { this.error = error?.message ?? String(error); });
       console.error('Error promocionando:', error);
@@ -406,9 +428,17 @@ export class PartidaVM {
   // Handlers de eventos del servidor
 
   handleMovimiento(movimiento: Movimiento, tablero: Tablero): void {
-    console.log('[PartidaVM] handleMovimiento recibido del backend', { movId: movimiento.id, esPromocion: movimiento.esPromocion });
+    console.log('[PartidaVM] handleMovimiento recibido del backend', {
+      movId: movimiento.id,
+      esPromocion: movimiento.esPromocion,
+      piezasEnTablero: tablero.piezas.length,
+      piezasEliminadas: tablero.piezas.filter(p => p.eliminada).length
+    });
 
     runInAction(() => {
+      // FIX: Hacer observable el tablero recibido para que MobX detecte cambios
+      makeAutoObservable(tablero);
+
       // Actualizar el tablero con el estado del backend
       this.tablero = tablero;
       if (this.partida) {
@@ -424,7 +454,33 @@ export class PartidaVM {
       }
     });
 
-    console.log('[PartidaVM] Tablero actualizado desde el backend');
+    console.log('[PartidaVM] Tablero actualizado desde el backend', {
+      piezasActuales: this.tablero?.piezas.length
+    });
+  }
+
+  handleTableroActualizado(tablero: Tablero): void {
+    console.log('[PartidaVM] handleTableroActualizado recibido del backend (deshacer)', {
+      piezasEnTablero: tablero.piezas.length,
+      piezasEliminadas: tablero.piezas.filter(p => p.eliminada).length
+    });
+
+    runInAction(() => {
+      // FIX: Hacer observable el tablero recibido para que MobX detecte cambios
+      makeAutoObservable(tablero);
+
+      // Actualizar el tablero con el estado del backend después de deshacer
+      this.tablero = tablero;
+      if (this.partida) {
+        this.partida.tablero = tablero;
+      }
+      this.actualizarPiezasEliminadas();
+      this.error = null;
+    });
+
+    console.log('[PartidaVM] Tablero sincronizado después de deshacer', {
+      piezasActuales: this.tablero?.piezas.length
+    });
   }
 
   handleTurnoActualizado(turno: Color, numeroTurno: number): void {

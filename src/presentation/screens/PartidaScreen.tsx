@@ -5,7 +5,7 @@
 
 import { useLocalSearchParams } from 'expo-router';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -13,6 +13,7 @@ import {
   BotonesAccion,
   ContadorPiezas,
   InfoPartida,
+  ModalConfirmacion,
   ModalFinPartida,
   ModalPromocion,
   TableroComponent,
@@ -78,12 +79,12 @@ const mensajeFinPartida = (tipo: string): string => {
   }
 };
 
-const mensajeResultado = (resultado: string): string => {
+const mensajeResultado = (resultado: string, miColor: string | null): string => {
   switch (resultado) {
-    case 'Victoria':
-      return '🎉 ¡Ganaste!';
-    case 'Derrota':
-      return '😔 Perdiste';
+    case 'VictoriaBlancas':
+      return miColor === 'Blanca' ? '🎉 ¡Ganaste!' : '😔 Perdiste';
+    case 'VictoriaNegras':
+      return miColor === 'Negra' ? '🎉 ¡Ganaste!' : '😔 Perdiste';
     case 'Empate':
       return '🤝 Empate';
     default:
@@ -94,6 +95,7 @@ const mensajeResultado = (resultado: string): string => {
 export const PartidaScreen = observer((props: any) => {
   const { state, actions } = usePartida();
   const mounted = useRef(true);
+  const [mostrarConfirmacionRendirse, setMostrarConfirmacionRendirse] = useState(false);
 
   // Leer params de forma segura: primero intentar props.route?.params (mobile),
   // luego useLocalSearchParams (expo-router/web).
@@ -111,7 +113,7 @@ export const PartidaScreen = observer((props: any) => {
   useEffect(() => {
     if (state.mostrarFinPartida && state.partida) {
       Alert.alert(
-        mensajeResultado(String(state.partida.resultado ?? '')),
+        mensajeResultado(String(state.partida.resultado ?? ''), state.miColor),
         `Tipo: ${mensajeFinPartida(String(state.partida.tipoFin ?? ''))}`,
         [
           {
@@ -279,10 +281,8 @@ export const PartidaScreen = observer((props: any) => {
           }
         }}
         rendirse={() => {
-          Alert.alert('¿Estás seguro?', 'Una vez que te rindas, perderás la partida.', [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Rendirse', onPress: () => actions.rendirse(), style: 'destructive' },
-          ]);
+          console.log('[PartidaScreen] Función rendirse llamada, mostrando modal');
+          setMostrarConfirmacionRendirse(true);
         }}
         hayMovimientoPendiente={!!state.movimientoPendiente}
         tablasOfrecidas={state.tablasOfrecidas}
@@ -295,7 +295,6 @@ export const PartidaScreen = observer((props: any) => {
         onPromocion={async (tipo) => {
           try {
             await actions.promocionarPeon(tipo);
-            await actions.confirmarMovimiento();
           } catch (err) {
             console.error('Error en promocion:', err);
           }
@@ -305,7 +304,7 @@ export const PartidaScreen = observer((props: any) => {
       {/* Modal de fin de partida */}
       <ModalFinPartida
         visible={state.mostrarFinPartida}
-        resultado={mensajeResultado(String(state.partida.resultado ?? ''))}
+        resultado={mensajeResultado(String(state.partida.resultado ?? ''), state.miColor)}
         tipo={mensajeFinPartida(String(state.partida.tipoFin ?? ''))}
         onVolverAlMenu={() => {
           try {
@@ -318,6 +317,22 @@ export const PartidaScreen = observer((props: any) => {
           } catch (err) {
             // noop
           }
+        }}
+      />
+
+      {/* Modal de confirmación de rendirse */}
+      <ModalConfirmacion
+        visible={mostrarConfirmacionRendirse}
+        titulo="¿Rendirse?"
+        mensaje="Una vez que te rindas, perderás la partida. ¿Estás seguro?"
+        onConfirmar={() => {
+          console.log('[PartidaScreen] Rendirse confirmado, llamando a actions.rendirse()');
+          setMostrarConfirmacionRendirse(false);
+          actions.rendirse();
+        }}
+        onCancelar={() => {
+          console.log('[PartidaScreen] Rendirse cancelado');
+          setMostrarConfirmacionRendirse(false);
         }}
       />
     </View>

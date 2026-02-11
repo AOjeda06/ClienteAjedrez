@@ -9,7 +9,7 @@ export type ConnectionState = 'Connected' | 'Disconnected' | 'Connecting' | 'Rec
 export type Color = 'Blanca' | 'Negra';
 export type TipoPieza = 'Peon' | 'Torre' | 'Caballo' | 'Alfil' | 'Reina' | 'Rey';
 export type EstadoPartida = 'Esperando' | 'EnCurso' | 'Finalizada';
-export type ResultadoPartida = 'Victoria' | 'Derrota' | 'Empate' | null;
+export type ResultadoPartida = 'VictoriaBlancas' | 'VictoriaNegras' | 'Empate' | null;
 export type TipoFinPartida = 'JaqueMate' | 'Tablas' | 'Rendicion' | 'Abandono';
 
 // Interfaces de dominio

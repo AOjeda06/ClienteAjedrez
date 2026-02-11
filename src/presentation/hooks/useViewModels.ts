@@ -22,9 +22,17 @@ import { PartidaVM } from '../viewmodels/PartidaVM';
  * Helper: safeBind - devuelve una función enlazada si existe, o un noop.
  */
 const safeBind = (obj: any, fnName: string) => {
-  if (!obj) return () => {};
+  if (!obj) {
+    console.warn(`[safeBind] ${fnName}: obj es null/undefined`);
+    return () => {};
+  }
   const fn = (obj as any)[fnName];
-  return typeof fn === 'function' ? fn.bind(obj) : () => {};
+  if (typeof fn === 'function') {
+    return fn.bind(obj);
+  } else {
+    console.error(`[safeBind] ${fnName}: NO es una función! tipo:`, typeof fn);
+    return () => {};
+  }
 };
 
 /**
