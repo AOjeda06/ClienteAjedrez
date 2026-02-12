@@ -3,8 +3,15 @@
  * Gestiona toda la lógica de juego
  */
 
-import { makeAutoObservable, runInAction, observable } from 'mobx';
+import { isObservable, makeAutoObservable, runInAction, observable } from 'mobx';
 import { Color, Posicion, posicionesIguales, ResultadoPartida, TipoFinPartida, TipoPieza } from '../../core/types';
+
+/** Safely make an object observable (no-op if already observable) */
+const safeObservable = (obj: any) => {
+  if (obj && !isObservable(obj)) {
+    makeAutoObservable(obj);
+  }
+};
 import { Movimiento } from '../../domain/entities/Movimiento';
 import { Partida } from '../../domain/entities/Partida';
 import { Pieza } from '../../domain/entities/Pieza';
@@ -31,6 +38,7 @@ export class PartidaVM {
   solicitadasTablas: boolean = false;
   solicitadoReinicio: boolean = false;
   oponenteSolicitoReinicio: boolean = false;
+  oponenteAbandono: boolean = false;
 
   private ajedrezUseCase: IAjedrezUseCase;
   private proximoMovimientoEsEnroque: boolean = false;
@@ -43,8 +51,8 @@ export class PartidaVM {
 
   inicializarPartida(partida: Partida, miColor: Color, miNombre: string): void {
     this.partida = partida;
-    makeAutoObservable(this.partida);
-    makeAutoObservable(partida.tablero);
+    safeObservable(this.partida);
+    safeObservable(partida.tablero);
     this.miColor = miColor;
     this.miNombre = miNombre;
     this.tablero = partida.tablero;
@@ -72,6 +80,8 @@ export class PartidaVM {
     this.ajedrezUseCase.subscribePromocion(this.handlePromocionRequerida.bind(this));
     this.ajedrezUseCase.subscribeTablas(this.handleTablasActualizadas.bind(this));
     this.ajedrezUseCase.subscribeReinicio(this.handleReinicioActualizado.bind(this));
+    this.ajedrezUseCase.subscribeAbandono(this.handleOponenteAbandono.bind(this));
+    this.ajedrezUseCase.subscribePartidaIniciada(this.handleReinicioPartida.bind(this));
     this.ajedrezUseCase.subscribeError(this.handleError.bind(this));
 
     console.log('[PartidaVM] inicializarPartida:', {
@@ -437,7 +447,7 @@ export class PartidaVM {
 
     runInAction(() => {
       // FIX: Hacer observable el tablero recibido para que MobX detecte cambios
-      makeAutoObservable(tablero);
+      safeObservable(tablero);
 
       // Actualizar el tablero con el estado del backend
       this.tablero = tablero;
@@ -467,7 +477,7 @@ export class PartidaVM {
 
     runInAction(() => {
       // FIX: Hacer observable el tablero recibido para que MobX detecte cambios
-      makeAutoObservable(tablero);
+      safeObservable(tablero);
 
       // Actualizar el tablero con el estado del backend después de deshacer
       this.tablero = tablero;
@@ -551,12 +561,58 @@ export class PartidaVM {
   handleReinicioActualizado(blancas: boolean, negras: boolean): void {
     runInAction(() => {
       if (this.miColor === 'Blanca') {
+        this.solicitadoReinicio = blancas;
         this.oponenteSolicitoReinicio = negras;
       } else {
+        this.solicitadoReinicio = negras;
         this.oponenteSolicitoReinicio = blancas;
       }
     });
-    console.log('[PartidaVM] handleReinicioActualizado recibido', { blancas, negras });
+    console.log('[PartidaVM] handleReinicioActualizado recibido', { blancas, negras, miColor: this.miColor });
+  }
+
+  handleReinicioPartida(partida: Partida): void {
+    console.log('[PartidaVM] handleReinicioPartida: nueva partida recibida', partida.id);
+    runInAction(() => {
+      safeObservable(partida);
+      safeObservable(partida.tablero);
+      this.partida = partida;
+      this.tablero = partida.tablero;
+
+      // Re-determine color in case server swaps colors for rematch
+      const nnNorm = (partida.jugadorNegras?.nombre ?? '').trim().toLowerCase();
+      const miNombreNorm = this.miNombre.trim().toLowerCase();
+      if (miNombreNorm && nnNorm && miNombreNorm === nnNorm) {
+        this.miColor = 'Negra';
+        this.nombreOponente = partida.jugadorBlancas?.nombre ?? '';
+      } else {
+        this.miColor = 'Blanca';
+        this.nombreOponente = partida.jugadorNegras?.nombre ?? '';
+      }
+
+      this.piezaSeleccionada = null;
+      this.movimientosPosibles = [];
+      this.movimientoPendiente = null;
+      this.mostrarPromocion = false;
+      this.mostrarFinPartida = false;
+      this.mensajeJaque = null;
+      this.error = null;
+      this.tablasOfrecidas = false;
+      this.solicitadasTablas = false;
+      this.solicitadoReinicio = false;
+      this.oponenteSolicitoReinicio = false;
+      this.oponenteAbandono = false;
+      this.piezasEliminadasBlancas.clear();
+      this.piezasEliminadasNegras.clear();
+      this.actualizarMensajeTurno();
+    });
+  }
+
+  handleOponenteAbandono(_connectionId: string): void {
+    runInAction(() => {
+      this.oponenteAbandono = true;
+    });
+    console.log('[PartidaVM] handleOponenteAbandono: oponente se fue');
   }
 
   handleError(error: string): void {
@@ -633,6 +689,7 @@ export class PartidaVM {
     this.solicitadasTablas = false;
     this.solicitadoReinicio = false;
     this.oponenteSolicitoReinicio = false;
+    this.oponenteAbandono = false;
     this.piezasEliminadasBlancas.clear();
     this.piezasEliminadasNegras.clear();
   }

@@ -190,10 +190,10 @@ export class AjedrezRepositorySignalR implements IAjedrezRepository {
       console.log('[TRACE repo] PartidaFinalizada recibido en repo (raw):', resultadoRaw, tipoRaw, ganador);
 
       // FIX: Convert enum numbers to strings
-      // ResultadoPartida: 0 = Empate, 1 = VictoriaBlancas, 2 = VictoriaNegras
+      // ResultadoPartida: 0 = VictoriaBlancas, 1 = VictoriaNegras, 2 = Empate
       let resultado: ResultadoPartida;
       if (typeof resultadoRaw === 'number') {
-        const resultados: ResultadoPartida[] = ['Empate', 'VictoriaBlancas', 'VictoriaNegras'];
+        const resultados: ResultadoPartida[] = ['VictoriaBlancas', 'VictoriaNegras', 'Empate'];
         resultado = resultados[resultadoRaw] ?? 'Empate';
       } else {
         resultado = resultadoRaw as ResultadoPartida;

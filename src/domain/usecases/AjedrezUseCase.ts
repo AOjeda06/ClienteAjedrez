@@ -236,5 +236,6 @@ export class AjedrezUseCase implements IAjedrezUseCase {
     console.log('[TRACE usecase] unsubscribeAll -> delegando a repo.offAllListeners y limpiando callbacks');
     this.ajedrezRepository.offAllListeners();
     this.partidaIniciadaCallbacks = [];
+    this.lastPartida = null;
   }
 }

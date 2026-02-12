@@ -3,10 +3,10 @@
  * Pantalla de Partida — versión robusta que evita leer params indefinidos
  */
 
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import {
   Boton,
@@ -95,6 +95,7 @@ const mensajeResultado = (resultado: string, miColor: string | null): string => 
 export const PartidaScreen = observer((props: any) => {
   const { state, actions } = usePartida();
   const mounted = useRef(true);
+  const router = useRouter();
   const [mostrarConfirmacionRendirse, setMostrarConfirmacionRendirse] = useState(false);
 
   // Leer params de forma segura: primero intentar props.route?.params (mobile),
@@ -109,66 +110,19 @@ export const PartidaScreen = observer((props: any) => {
     };
   }, []);
 
-  // Mostrar alert de fin de partida cuando corresponda (defensivo: comprobar existencia)
-  useEffect(() => {
-    if (state.mostrarFinPartida && state.partida) {
-      Alert.alert(
-        mensajeResultado(String(state.partida.resultado ?? ''), state.miColor),
-        `Tipo: ${mensajeFinPartida(String(state.partida.tipoFin ?? ''))}`,
-        [
-          {
-            text: 'Volver al Menú',
-            onPress: () => {
-              try {
-                actions.volverAlMenu();
-              } catch (err) {
-                console.error('Error en volverAlMenu:', err);
-              }
-              // Si navigation está disponible en props, usarla; si no, no fallar.
-              try {
-                props?.navigation?.navigate?.('MenuPrincipal', { nombreJugador });
-              } catch (err) {
-                // noop
-              }
-            },
-          },
-        ]
-      );
+  // Helper para volver al menú principal
+  const volverAlMenu = () => {
+    try {
+      actions.volverAlMenu();
+    } catch (err) {
+      console.error('Error en volverAlMenu:', err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.mostrarFinPartida, state.partida]);
-
-  // Alert para tablas ofrecidas
-  useEffect(() => {
-    if (state.tablasOfrecidas) {
-      Alert.alert(
-        'Tablas Ofrecidas',
-        `${state.nombreOponente || 'El oponente'} ofrece tablas`,
-        [
-          {
-            text: 'Aceptar',
-            onPress: () => {
-              try {
-                actions.solicitarTablas();
-              } catch (err) {
-                console.error('Error aceptando tablas:', err);
-              }
-            },
-          },
-          {
-            text: 'Rechazar',
-            onPress: () => {
-              try {
-                actions.retirarTablas();
-              } catch (err) {
-                console.error('Error rechazando tablas:', err);
-              }
-            },
-          },
-        ]
-      );
+    try {
+      router.replace(`/menu-principal?nombreJugador=${encodeURIComponent(nombreJugador)}`);
+    } catch (err) {
+      console.error('Error navegando al menú:', err);
     }
-  }, [state.tablasOfrecidas]);
+  };
 
   // Si no hay partida aún, mostrar pantalla de carga / espera.
   // No intentamos inicializar la partida aquí con datos inexistentes.
@@ -301,23 +255,26 @@ export const PartidaScreen = observer((props: any) => {
         }}
       />
 
+      {/* Modal de tablas ofrecidas */}
+      <ModalConfirmacion
+        visible={state.tablasOfrecidas}
+        titulo="Tablas Ofrecidas"
+        mensaje={`${state.nombreOponente || 'El oponente'} ofrece tablas. ¿Aceptas?`}
+        onConfirmar={() => actions.solicitarTablas()}
+        onCancelar={() => actions.retirarTablas()}
+      />
+
       {/* Modal de fin de partida */}
       <ModalFinPartida
         visible={state.mostrarFinPartida}
         resultado={mensajeResultado(String(state.partida.resultado ?? ''), state.miColor)}
         tipo={mensajeFinPartida(String(state.partida.tipoFin ?? ''))}
-        onVolverAlMenu={() => {
-          try {
-            actions.volverAlMenu();
-          } catch (err) {
-            console.error('Error volviendo al menu:', err);
-          }
-          try {
-            props?.navigation?.navigate?.('MenuPrincipal', { nombreJugador });
-          } catch (err) {
-            // noop
-          }
-        }}
+        onVolverAlMenu={volverAlMenu}
+        onJugarDeNuevo={() => actions.solicitarReinicio()}
+        onRetirarReinicio={() => actions.retirarReinicio()}
+        oponenteAbandono={state.oponenteAbandono}
+        solicitadoReinicio={state.solicitadoReinicio}
+        oponenteSolicitoReinicio={state.oponenteSolicitoReinicio}
       />
 
       {/* Modal de confirmación de rendirse */}

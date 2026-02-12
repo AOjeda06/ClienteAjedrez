@@ -374,21 +374,68 @@ interface ModalFinPartidaProps {
     resultado: string;
     tipo: string;
     onVolverAlMenu: () => void;
+    onJugarDeNuevo: () => void;
+    onRetirarReinicio: () => void;
+    oponenteAbandono: boolean;
+    solicitadoReinicio: boolean;
+    oponenteSolicitoReinicio: boolean;
 }
 
 export const ModalFinPartida: React.FC<ModalFinPartidaProps> = ({
     visible,
     resultado,
     tipo,
-    onVolverAlMenu
+    onVolverAlMenu,
+    onJugarDeNuevo,
+    onRetirarReinicio,
+    oponenteAbandono,
+    solicitadoReinicio,
+    oponenteSolicitoReinicio
 }) => {
+    // Determine button text and style
+    let reinicioTitle: string;
+    let reinicioStyle: any;
+    let reinicioDisabled = false;
+    let reinicioHandler: () => void;
+
+    if (oponenteAbandono) {
+        // Opponent left: permanently disabled
+        reinicioTitle = "Oponente abandon\u00f3";
+        reinicioStyle = estilos.botonDeshabilitado;
+        reinicioDisabled = true;
+        reinicioHandler = () => {};
+    } else if (oponenteSolicitoReinicio && !solicitadoReinicio) {
+        // Opponent proposed: yellow "Accept" button
+        reinicioTitle = "Aceptar revancha";
+        reinicioStyle = estilos.botonAmarillo;
+        reinicioHandler = onJugarDeNuevo;
+    } else if (solicitadoReinicio) {
+        // I proposed: allow retraction
+        reinicioTitle = "Retirar propuesta";
+        reinicioStyle = estilos.botonDeshabilitado;
+        reinicioHandler = onRetirarReinicio;
+    } else {
+        // No one proposed yet
+        reinicioTitle = "Jugar de nuevo";
+        reinicioStyle = { backgroundColor: '#4CAF50' };
+        reinicioHandler = onJugarDeNuevo;
+    }
+
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={estilos.modalContainer}>
                 <View style={estilos.modalContent}>
                     <Text style={estilos.tituloModal}>{resultado}</Text>
                     <Text style={{ marginBottom: 20 }}>{tipo}</Text>
-                    <Boton title="Volver al Menú" onPress={onVolverAlMenu} />
+                    <View style={{ width: '100%' }}>
+                        <Boton
+                            title={reinicioTitle}
+                            onPress={reinicioHandler}
+                            disabled={reinicioDisabled}
+                            style={reinicioStyle}
+                        />
+                        <Boton title="Volver al Men\u00fa" onPress={onVolverAlMenu} style={{ marginTop: 5 }} />
+                    </View>
                 </View>
             </View>
         </Modal>
