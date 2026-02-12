@@ -51,6 +51,9 @@ export class PartidaVM {
   }
 
   inicializarPartida(partida: Partida, miColor: Color, miNombre: string): void {
+    // Reset the leaving flag for new game
+    this.estaSaliendo = false;
+
     this.partida = partida;
     safeObservable(this.partida);
     safeObservable(partida.tablero);
@@ -524,16 +527,26 @@ export class PartidaVM {
   }
 
   handleTablasActualizadas(blancas: boolean, negras: boolean): void {
+    // Don't process events if we're leaving
+    if (this.estaSaliendo) {
+      console.log('[PartidaVM] handleTablasActualizadas: ignorando evento porque estamos saliendo');
+      return;
+    }
+
     runInAction(() => {
       if (this.partida) {
         this.partida.tablasBlancas = blancas;
         this.partida.tablasNegras = negras;
 
-        // Si el oponente ofrece tablas
-        if (this.miColor === 'Blanca' && negras) {
-          this.tablasOfrecidas = true;
-        } else if (this.miColor === 'Negra' && blancas) {
-          this.tablasOfrecidas = true;
+        // Update our states based on opponent's state
+        if (this.miColor === 'Blanca') {
+          // We are white, opponent is black
+          this.tablasOfrecidas = negras; // Show accept button if opponent offers
+          this.solicitadasTablas = blancas; // We offered tables
+        } else if (this.miColor === 'Negra') {
+          // We are black, opponent is white
+          this.tablasOfrecidas = blancas; // Show accept button if opponent offers
+          this.solicitadasTablas = negras; // We offered tables
         }
         this.error = null;
       }
@@ -583,6 +596,12 @@ export class PartidaVM {
   }
 
   handleReinicioActualizado(blancas: boolean, negras: boolean): void {
+    // Don't process events if we're leaving
+    if (this.estaSaliendo) {
+      console.log('[PartidaVM] handleReinicioActualizado: ignorando evento porque estamos saliendo');
+      return;
+    }
+
     runInAction(() => {
       if (this.miColor === 'Blanca') {
         this.solicitadoReinicio = blancas;
@@ -597,6 +616,13 @@ export class PartidaVM {
 
   handleReinicioPartida(partida: Partida): void {
     console.log('[PartidaVM] handleReinicioPartida: nueva partida recibida', partida.id);
+
+    // Don't process events if we're leaving
+    if (this.estaSaliendo) {
+      console.log('[PartidaVM] handleReinicioPartida: ignorando evento porque estamos saliendo');
+      return;
+    }
+
     runInAction(() => {
       safeObservable(partida);
       safeObservable(partida.tablero);
@@ -633,6 +659,12 @@ export class PartidaVM {
   }
 
   handleOponenteAbandono(_connectionId: string): void {
+    // Don't process events if we're leaving
+    if (this.estaSaliendo) {
+      console.log('[PartidaVM] handleOponenteAbandono: ignorando evento porque estamos saliendo');
+      return;
+    }
+
     runInAction(() => {
       this.oponenteAbandono = true;
     });
@@ -713,9 +745,9 @@ export class PartidaVM {
     this.solicitadasTablas = false;
     this.solicitadoReinicio = false;
     this.oponenteSolicitoReinicio = false;
-    this.estaSaliendo = false; // Reset flag for next game
     this.oponenteAbandono = false;
     this.piezasEliminadasBlancas.clear();
     this.piezasEliminadasNegras.clear();
+    // Note: estaSaliendo is NOT reset here to prevent processing events after leaving
   }
 }

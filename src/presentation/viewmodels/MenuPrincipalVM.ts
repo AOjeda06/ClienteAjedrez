@@ -30,6 +30,7 @@ export class MenuPrincipalVM {
   salaCreada: Sala | null = null;
   esperandoOponente: boolean = false;
   partida: Partida | null = null;
+  seCreaLaSala: boolean = false; // Flag to distinguish between creating and joining
 
   private ajedrezUseCase: IAjedrezUseCase;
 
@@ -111,6 +112,7 @@ export class MenuPrincipalVM {
 
       runInAction(() => {
         this.esperandoOponente = true;
+        this.seCreaLaSala = true; // Mark that we created the room
       });
     } catch (error: any) {
       runInAction(() => {
@@ -143,6 +145,7 @@ export class MenuPrincipalVM {
 
       runInAction(() => {
         this.esperandoOponente = true;
+        this.seCreaLaSala = false; // Mark that we joined the room
       });
     } catch (error: any) {
       runInAction(() => {
@@ -193,6 +196,7 @@ export class MenuPrincipalVM {
       this.salaCreada = null;
       this.esperandoOponente = false;
       this.partida = null;
+      this.seCreaLaSala = false;
     });
   }
 }

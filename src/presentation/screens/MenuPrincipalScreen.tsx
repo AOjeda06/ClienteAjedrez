@@ -116,12 +116,6 @@ export const MenuPrincipalScreen: React.FC = observer(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewModel.partida]);
 
-  useEffect(() => {
-    if (viewModel.esperandoOponente) {
-      Alert.alert('Sala Creada', `Esperando al oponente en la sala: ${viewModel.nombreSalaCrear || viewModel.nombreSala}`);
-    }
-  }, [viewModel.esperandoOponente, viewModel.nombreSalaCrear, viewModel.nombreSala]);
-
   const getEstadoConexionStyle = () => {
     switch (viewModel.connectionState) {
       case 'Connected':    return estilos.conectado;

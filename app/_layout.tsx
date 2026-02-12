@@ -20,6 +20,35 @@ export default function RootLayout() {
           fontWeight: 'bold',
         },
       }}
-    />
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="identificacion"
+        options={{
+          title: 'Identificación',
+          headerBackVisible: false
+        }}
+      />
+      <Stack.Screen
+        name="menu-principal"
+        options={{
+          title: 'Menú Principal',
+          headerBackVisible: false
+        }}
+      />
+      <Stack.Screen
+        name="partida"
+        options={{
+          headerBackVisible: false,
+          gestureEnabled: false,
+          title: 'Partida'
+        }}
+      />
+    </Stack>
   );
 }
