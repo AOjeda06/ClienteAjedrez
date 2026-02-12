@@ -5,6 +5,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import {
+  Dimensions,
   Modal,
   StyleSheet,
   Text,
@@ -15,6 +16,12 @@ import {
 import { Color, Posicion, TipoPieza } from '../../core/types';
 import { Pieza } from '../../domain/entities/Pieza';
 import { Tablero } from '../../domain/entities/Tablero';
+
+// Responsive board size: fit 8 squares within screen width (with some padding)
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const BOARD_PADDING = 32; // total horizontal padding
+const CASILLA_SIZE = Math.floor(Math.min((SCREEN_WIDTH - BOARD_PADDING) / 8, 50));
+const PIEZA_FONT = Math.floor(CASILLA_SIZE * 0.7);
 
 // Colores y estilos
 const CASILLA_BLANCA = '#F0D9B5';
@@ -39,20 +46,22 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
   },
   casilla: {
-    width: 40, // Ajustar según pantalla, idealmente usar Dimensions
-    height: 40,
+    width: CASILLA_SIZE,
+    height: CASILLA_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
   },
   piezaTexto: {
-    fontSize: 28,
+    fontSize: PIEZA_FONT,
   },
   boton: {
     backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 5,
-    margin: 5,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    margin: 4,
     alignItems: 'center',
+    minHeight: 44, // Apple's minimum touch target
   },
   botonTexto: {
     color: 'white',

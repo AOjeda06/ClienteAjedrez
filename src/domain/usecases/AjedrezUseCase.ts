@@ -237,5 +237,7 @@ export class AjedrezUseCase implements IAjedrezUseCase {
     this.ajedrezRepository.offAllListeners();
     this.partidaIniciadaCallbacks = [];
     this.lastPartida = null;
+    // Re-register the internal relay handler so PartidaIniciada events work in the next session
+    this.ajedrezRepository.onPartidaIniciada((p: Partida) => this.handlePartidaIniciadaFromRepo(p));
   }
 }

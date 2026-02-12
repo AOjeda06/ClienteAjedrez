@@ -6,7 +6,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
   Boton,
@@ -138,7 +138,7 @@ export const PartidaScreen = observer((props: any) => {
 
   // Render principal cuando la partida ya está en el estado del VM
   return (
-    <View style={estilos.container}>
+    <ScrollView style={estilos.container} contentContainerStyle={{ flexGrow: 1 }}>
       {/* Información de partida y oponente */}
       <InfoPartida
         nombreOponente={state.nombreOponente}
@@ -292,7 +292,7 @@ export const PartidaScreen = observer((props: any) => {
           setMostrarConfirmacionRendirse(false);
         }}
       />
-    </View>
+    </ScrollView>
   );
 });
 

@@ -431,6 +431,8 @@ export class PartidaVM {
    * Vuelve al menú principal (desuscribirse de eventos)
    */
   volverAlMenu(): void {
+    // Notify the server we're leaving so it sends JugadorAbandonado to the opponent
+    this.ajedrezUseCase.salirDeSala().catch(() => {});
     this.ajedrezUseCase.unsubscribeAll();
     this.reset();
   }
