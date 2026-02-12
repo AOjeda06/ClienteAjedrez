@@ -255,15 +255,6 @@ export const PartidaScreen = observer((props: any) => {
         }}
       />
 
-      {/* Modal de tablas ofrecidas */}
-      <ModalConfirmacion
-        visible={state.tablasOfrecidas}
-        titulo="Tablas Ofrecidas"
-        mensaje={`${state.nombreOponente || 'El oponente'} ofrece tablas. ¿Aceptas?`}
-        onConfirmar={() => actions.solicitarTablas()}
-        onCancelar={() => actions.retirarTablas()}
-      />
-
       {/* Modal de fin de partida */}
       <ModalFinPartida
         visible={state.mostrarFinPartida}
