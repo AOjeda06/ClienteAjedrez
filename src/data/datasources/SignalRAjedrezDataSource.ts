@@ -121,7 +121,12 @@ export class SignalRAjedrezDataSource {
       }
 
       await (this.hubConnection as any).invoke(method, ...args);
-    } catch (error) {
+    } catch (error: any) {
+      const msg = error?.message ?? '';
+      if (msg.includes('connection being closed') || msg.includes('Invocation canceled')) {
+        console.log(`[SignalR DS] Invocación de ${method} cancelada (conexión cerrada)`);
+        return;
+      }
       console.error(`[SignalR DS] Error invocando ${method}:`, error);
       throw error;
     }
