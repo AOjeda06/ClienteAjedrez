@@ -97,7 +97,6 @@ export const useMenuPrincipal = () => {
       setNombreSalaCrear: safeBind(viewModel, 'setNombreSalaCrear'),
       setNombreSalaUnirse: safeBind(viewModel, 'setNombreSalaUnirse'),
       conectar: safeBind(viewModel, 'conectar'),
-      desconectar: safeBind(viewModel, 'desconectar'),
       crearSala: safeBind(viewModel, 'crearSala'),
       unirseSala: safeBind(viewModel, 'unirseSala'),
       reset: safeBind(viewModel, 'reset'),
@@ -194,6 +193,7 @@ export const usePartida = () => {
       promocionarPeon: safeBind(viewModel, 'promocionarPeon'),
       solicitarReinicio: safeBind(viewModel, 'solicitarReinicio'),
       retirarReinicio: safeBind(viewModel, 'retirarReinicio'),
+      cerrarModalFinPartida: safeBind(viewModel, 'cerrarModalFinPartida'),
       volverAlMenu: safeBind(viewModel, 'volverAlMenu'),
     },
   };

@@ -9,8 +9,8 @@ import { ConnectionState } from '../../core/types';
 import { Partida } from '../../domain/entities/Partida';
 import { Sala } from '../../domain/entities/Sala';
 import { IAjedrezUseCase } from '../../domain/interfaces/IAjedrezUseCase';
-// ← FIX: importar setPendingPartida para resolver la race condition con PartidaScreen
-import { setPendingPartida } from '../../core/gameState';
+// ← FIX: importar setPendingPartida y clearPendingPartida para resolver la race condition con PartidaScreen
+import { setPendingPartida, clearPendingPartida } from '../../core/gameState';
 
 export class MenuPrincipalVM {
   // Identificación
@@ -59,7 +59,12 @@ export class MenuPrincipalVM {
       runInAction(() => {
         this.isLoading = true;
         this.error = null;
+        // Clear partida from previous game to prevent modal persistence
+        this.partida = null;
       });
+
+      // Clear pending partida from previous game
+      clearPendingPartida();
 
       if (!this.nombreJugador || this.nombreJugador.trim().length === 0) {
         throw new Error('Debes ingresar tu nombre de jugador');
@@ -87,22 +92,6 @@ export class MenuPrincipalVM {
       runInAction(() => {
         this.isLoading = false;
       });
-    }
-  }
-
-  async desconectar(): Promise<void> {
-    try {
-      runInAction(() => { this.isLoading = true; });
-      await this.ajedrezUseCase.desconectarJugador();
-      runInAction(() => {
-        this.connectionState = 'Disconnected';
-      });
-      this.ajedrezUseCase.unsubscribeAll();
-    } catch (error: any) {
-      console.error('Error al desconectar:', error);
-      throw error;
-    } finally {
-      runInAction(() => { this.isLoading = false; });
     }
   }
 

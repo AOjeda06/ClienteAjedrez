@@ -102,9 +102,7 @@ export const MenuPrincipalScreen: React.FC = observer(() => {
       console.error('Error al conectar desde MenuPrincipal:', err);
     });
 
-    return () => {
-      actions.desconectar().catch(e => console.error('Error al desconectar:', e));
-    };
+    // No cleanup needed - connection persists across navigation
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nombreJugador]);
 
@@ -211,18 +209,13 @@ export const MenuPrincipalScreen: React.FC = observer(() => {
         />
       </View>
 
-      {/* Desconectar */}
+      {/* Cambiar nombre de usuario */}
       <Boton
-        title="Desconectar"
-        onPress={async () => {
-          try {
-            await actions.desconectar();
-          } catch (err: any) {
-            console.error('Error al desconectar:', err);
-          }
+        title="Cambiar nombre de usuario"
+        onPress={() => {
+          router.replace('/identificacion');
         }}
-        loading={viewModel.isLoading}
-        style={{ backgroundColor: '#F44336', marginTop: 24 }}
+        style={{ backgroundColor: '#FF9800', marginTop: 24 }}
       />
     </ScrollView>
   );

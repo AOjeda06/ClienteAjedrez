@@ -43,6 +43,7 @@ export class PartidaVM {
   private ajedrezUseCase: IAjedrezUseCase;
   private proximoMovimientoEsEnroque: boolean = false;
   private timer: number | null = null;
+  private estaSaliendo: boolean = false; // Flag to prevent processing events while leaving
 
   constructor(useCase: IAjedrezUseCase) {
     this.ajedrezUseCase = useCase;
@@ -428,9 +429,24 @@ export class PartidaVM {
   }
 
   /**
+   * Cierra el modal de fin de partida explícitamente
+   */
+  cerrarModalFinPartida(): void {
+    runInAction(() => {
+      this.mostrarFinPartida = false;
+    });
+  }
+
+  /**
    * Vuelve al menú principal (desuscribirse de eventos)
    */
   volverAlMenu(): void {
+    // Set flag to prevent processing any more events
+    this.estaSaliendo = true;
+
+    // Close the modal immediately to prevent it from persisting
+    this.cerrarModalFinPartida();
+
     // Notify the server we're leaving so it sends JugadorAbandonado to the opponent
     this.ajedrezUseCase.salirDeSala().catch(() => {});
     this.ajedrezUseCase.unsubscribeAll();
@@ -526,6 +542,12 @@ export class PartidaVM {
   }
 
   handlePartidaFinalizada(resultado: ResultadoPartida, tipo: TipoFinPartida, ganador?: string): void {
+    // Don't process events if we're leaving
+    if (this.estaSaliendo) {
+      console.log('[PartidaVM] handlePartidaFinalizada: ignorando evento porque estamos saliendo');
+      return;
+    }
+
     runInAction(() => {
       this.mostrarFinPartida = true;
       if (this.partida) {
@@ -691,6 +713,7 @@ export class PartidaVM {
     this.solicitadasTablas = false;
     this.solicitadoReinicio = false;
     this.oponenteSolicitoReinicio = false;
+    this.estaSaliendo = false; // Reset flag for next game
     this.oponenteAbandono = false;
     this.piezasEliminadasBlancas.clear();
     this.piezasEliminadasNegras.clear();

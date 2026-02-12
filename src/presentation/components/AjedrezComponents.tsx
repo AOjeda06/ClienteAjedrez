@@ -255,37 +255,50 @@ export const BotonesAccion: React.FC<BotonesAccionProps> = ({
         rendirse();
     };
 
+    // Responsive: on wider screens (desktop), show all 4 buttons in one row
+    const isWideScreen = SCREEN_WIDTH >= 600;
+
     return (
-        <View>
-            <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
-                <Boton
-                    title="Confirmar"
-                    onPress={confirmarMovimiento}
-                    disabled={!hayMovimientoPendiente}
-                    style={!hayMovimientoPendiente ? estilos.botonDeshabilitado : {}}
-                />
-                <Boton
-                    title="Deshacer"
-                    onPress={deshacerMovimiento}
-                    disabled={!hayMovimientoPendiente}
-                    style={!hayMovimientoPendiente ? estilos.botonDeshabilitado : {}}
-                />
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
-                {tablasOfrecidas ? (
+        <View style={{ paddingHorizontal: 8 }}>
+            <View style={{
+                flexDirection: isWideScreen ? 'row' : 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: isWideScreen ? 0 : 10
+            }}>
+                {/* Row 1 (or all on desktop) */}
+                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
                     <Boton
-                        title="Aceptar Tablas"
-                        onPress={solicitarTablas} // Al solicitar si ya hay oferta, se acepta
-                        style={estilos.botonAmarillo}
+                        title="Confirmar"
+                        onPress={confirmarMovimiento}
+                        disabled={!hayMovimientoPendiente}
+                        style={!hayMovimientoPendiente ? estilos.botonDeshabilitado : {}}
                     />
-                ) : (
                     <Boton
-                        title={solicitadasTablas ? "Retirar Tablas" : "Ofrecer Tablas"}
-                        onPress={solicitadasTablas ? retirarTablas : solicitarTablas}
-                        style={solicitadasTablas ? estilos.botonDeshabilitado : {}}
+                        title="Deshacer"
+                        onPress={deshacerMovimiento}
+                        disabled={!hayMovimientoPendiente}
+                        style={!hayMovimientoPendiente ? estilos.botonDeshabilitado : {}}
                     />
-                )}
-                <Boton title="Rendirse" onPress={handleRendirse} style={{ backgroundColor: COLOR_ERROR }} />
+                </View>
+
+                {/* Row 2 (or same row on desktop) */}
+                <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+                    {tablasOfrecidas ? (
+                        <Boton
+                            title="Aceptar Tablas"
+                            onPress={solicitarTablas} // Al solicitar si ya hay oferta, se acepta
+                            style={estilos.botonAmarillo}
+                        />
+                    ) : (
+                        <Boton
+                            title={solicitadasTablas ? "Retirar Tablas" : "Ofrecer Tablas"}
+                            onPress={solicitadasTablas ? retirarTablas : solicitarTablas}
+                            style={solicitadasTablas ? estilos.botonDeshabilitado : {}}
+                        />
+                    )}
+                    <Boton title="Rendirse" onPress={handleRendirse} style={{ backgroundColor: COLOR_ERROR }} />
+                </View>
             </View>
         </View>
     );
@@ -409,7 +422,7 @@ export const ModalFinPartida: React.FC<ModalFinPartidaProps> = ({
 
     if (oponenteAbandono) {
         // Opponent left: permanently disabled
-        reinicioTitle = "Oponente abandon\u00f3";
+        reinicioTitle = "Oponente abandonó";
         reinicioStyle = estilos.botonDeshabilitado;
         reinicioDisabled = true;
         reinicioHandler = () => {};
@@ -443,7 +456,7 @@ export const ModalFinPartida: React.FC<ModalFinPartidaProps> = ({
                             disabled={reinicioDisabled}
                             style={reinicioStyle}
                         />
-                        <Boton title="Volver al Men\u00fa" onPress={onVolverAlMenu} style={{ marginTop: 5 }} />
+                        <Boton title="Volver al Menú" onPress={onVolverAlMenu} style={{ marginTop: 5 }} />
                     </View>
                 </View>
             </View>
